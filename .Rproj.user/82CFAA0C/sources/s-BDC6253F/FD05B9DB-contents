@@ -1,0 +1,124 @@
+---
+title: "RAProject"
+author: "Mingzhi Ye"
+date: "2022/10/10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,include = FALSE}
+library(VDJdive)
+library(tidyverse)
+require(SingleCellExperiment)
+library(r2r)
+
+
+
+# metadata(sce)$clonoStats
+# clonoAbundance(sce)
+# clonoFrequency(sce)
+# EMstats <- clonoStats(sce, method = "EM")
+# 
+# EMstats2=metadata(EMstats)$clonoStats
+# barVDJ(EMstats2, title = "contigs", legend = TRUE)
+# abundanceVDJ(EMstats2)
+```
+
+```{r}
+sce0 <- readRDS('toyTCRdata.rds')
+sce <- clonoStats(sce0, method = 'EM')
+
+#A<-sce0$contigs[sce0$contigs[, 'chain'] %in% c('TRA','TRB')]
+for (i in 1:length(sce0$contigs)){
+  #sce0$contigs[[i]]  "DFrame"  "S4Vectors"
+  #sce0$contigs[[i]]<-sce0$contigs[[i]] %>% filter(chain %in% c("TRA","TRB"))
+  #sce0$contigs[[i]]<-sce0$contigs[[i]][filter(sce0$contigs[[i]]$chain %in% c("TRA","TRB")),]
+  sce0$contigs[[i]]<-sce0$contigs[[i]][order(sce0$contigs[[i]]$chain),]
+  
+}
+```
+
+# Generate sample pool
+```{r}
+samplePool=DataFrameList()
+poolSize=1
+for (i in 1:length(sce0$contigs)){
+  if(length(sce0$contigs[[i]]$chain)==2 & sce0$contigs[[i]]$chain[1]=='TRA' & sce0$contigs[[i]]$chain[2]=='TRB'){
+    
+    samplePool[[poolSize]]=sce0$contigs[[i]]
+    poolSize=poolSize+1
+  }
+  
+}
+poolSize=poolSize-1
+```
+
+# Functions for generate a sample
+```{r}
+getPoisson<-function(){
+  a=-1
+  while(a<0 | a>4){
+    a=rpois(1, 1)
+  }
+  return(a)
+}
+getClonotype<-function(){
+  numberA=getPoisson()
+  numberB=getPoisson()
+  result=DataFrame()
+  indexInPool=sample.int(poolSize, 1, replace=TRUE)
+  if (numberA>=1){
+    result=rbind(result,samplePool[[indexInPool]][1,])
+    numberA=numberA-1
+  }
+  if (numberB>=1){
+    result=rbind(result,samplePool[[indexInPool]][2,])
+    numberB=numberB-1
+  }
+  while(numberA>0 | numberB>0){
+    indexInPool=sample.int(poolSize, 1, replace=TRUE)
+    if (numberA>=1){
+      result=rbind(result,samplePool[[indexInPool]][1,])
+      numberA=numberA-1
+    }
+    else{
+      result=rbind(result,samplePool[[indexInPool]][2,])
+      numberB=numberB-1
+    }
+  }
+  if(length(result$barcode)){
+    for(i in 1:length(result$barcode)){
+      result$barcode[i]=result$barcode[1]
+      result$sample[i]='sim'
+    }
+  }
+  return(result)
+
+}
+```
+
+# Use the functions to generate a sample with size 50
+
+However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
+```{r}
+SampleSize=50
+getSample<-function(samplesize){
+  sample=DataFrame()
+  for(i in 1:samplesize){
+    sample=rbind(sample,getClonotype())
+  }
+  samplelist<-split(sample,sample$barcode)
+  # sample1<-as(sample,'SplitDFrameList')
+  return(samplelist)
+  
+}
+samplelist=getSample(SampleSize)
+EMpredicted <- clonoStats(samplelist, method = 'EM')
+UNpredicted <- clonoStats(samplelist, method = 'unique')
+
+
+
+```

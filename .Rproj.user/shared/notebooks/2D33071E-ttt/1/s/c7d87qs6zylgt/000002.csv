@@ -1,0 +1,8 @@
+"0","#A<-sce0$contigs[sce0$contigs[, 'chain'] %in% c('TRA','TRB')]"
+"0","for (i in 1:length(sce0$contigs)){"
+"0","  #sce0$contigs[[i]]  ""DFrame""  ""S4Vectors"""
+"0","  #sce0$contigs[[i]]<-sce0$contigs[[i]] %>% filter(chain %in% c(""TRA"",""TRB""))"
+"0","  #sce0$contigs[[i]]<-sce0$contigs[[i]][filter(sce0$contigs[[i]]$chain %in% c(""TRA"",""TRB"")),]"
+"0","  sce0$contigs[[i]]<-sce0$contigs[[i]][order(sce0$contigs[[i]]$chain),]"
+"0","  "
+"0","}"
