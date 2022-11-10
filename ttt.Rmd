@@ -65,7 +65,7 @@ getPoisson<-function(){
   }
   return(a)
 }
-getClonotype<-function(){
+getClonotype<-function(clonotype_index){
   numberA=getPoisson()
   numberB=getPoisson()
   result=DataFrame()
@@ -90,8 +90,10 @@ getClonotype<-function(){
     }
   }
   if(length(result$barcode)){
+    new_barcode=paste(result$barcode[1],clonotype_index,sep=' ')
     for(i in 1:length(result$barcode)){
-      result$barcode[i]=result$barcode[1]
+      #result$barcode[i]=result$barcode[1]
+      result$barcode[i]=new_barcode
       result$sample[i]='sim'
     }
   }
@@ -104,11 +106,10 @@ getClonotype<-function(){
 
 However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
 ```{r}
-SampleSize=50
 getSample<-function(samplesize){
   sample=DataFrame()
-  for(i in 1:samplesize){
-    sample=rbind(sample,getClonotype())
+  for(clonotype_index in 1:samplesize){
+    sample=rbind(sample,getClonotype(clonotype_index))
   }
   samplelist<-split(sample,sample$barcode)
   # sample1<-as(sample,'SplitDFrameList')
@@ -181,12 +182,11 @@ for(i in 1:50){
   EMpredicted <- clonoStats(samplelist, method = 'EM')
   distance1=getDistance(EMpredicted)
   DistanceListFromEM[i]=distance1
+  UNpredicted <- clonoStats(samplelist, method = 'unique')
+  distance2=getDistance(UNpredicted)
+  DistanceListFromUN[i]=distance2
   print(i)
-  # UNpredicted <- clonoStats(samplelist, method = 'unique')
-  # distance2=getDistance(UNpredicted)
-  # DistanceListFromUN[i]=distance2
 }
-
 
 ```
 
@@ -195,5 +195,10 @@ for(i in 1:50){
 ```{r}
 boxplot(DistanceListFromEM)
 hist(DistanceListFromEM)
-
+boxplot(DistanceListFromUN)
+hist(DistanceListFromUN)
+print(median(DistanceListFromEM))
+print(median(DistanceListFromUN))
+print(mean(DistanceListFromEM))
+print(mean(DistanceListFromUN))
 ```

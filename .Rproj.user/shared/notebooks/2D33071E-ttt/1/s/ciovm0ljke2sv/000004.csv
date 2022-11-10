@@ -11,7 +11,7 @@
 "0","}"
 "0","# samplelist=getSample(SampleSize)"
 "0","# EMpredicted <- clonoStats(samplelist, method = 'EM')"
-"0","#UNpredicted <- clonoStats(samplelist, method = 'unique')"
+"0","# UNpredicted <- clonoStats(samplelist, method = 'unique')"
 "0",""
 "0",""
 "0",""
