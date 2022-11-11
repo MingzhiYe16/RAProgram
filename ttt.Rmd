@@ -58,16 +58,25 @@ poolSize=poolSize-1
 
 # Functions for generate a sample
 ```{r}
-getClonotype<-function(clonotype_index, numberA, numberB){
+getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
     result=DataFrame()
-    indexInPool=sample.int(poolSize, 1, replace=TRUE)
-    whichClono <- sample(nrow(Truth), 1, prob = Truth$prop)
+    indexInPool=sample.int(poolSize, 3, replace=FALSE)
+
     if (numberA>=1){
-        result=rbind(result,samplePool[[indexInPool]][1,])
+        if(runif(1) < errorProb){
+          result=rbind(result,samplePool[[indexInPool[2]]][1,])
+        }else{
+          result=rbind(result,samplePool[[indexInPool[1]]][1,])
+        }
         numberA=numberA-1
     }
     if (numberB>=1){
-        result=rbind(result,samplePool[[indexInPool]][2,])
+        if(runif(1) < errorProb){
+          result=rbind(result,samplePool[[indexInPool[3]]][2,])
+        }else{
+          result=rbind(result,samplePool[[indexInPool[1]]][2,])
+        }
+
         numberB=numberB-1
     }
     while(numberA>0 | numberB>0){
