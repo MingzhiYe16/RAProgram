@@ -58,47 +58,31 @@ poolSize=poolSize-1
 
 # Functions for generate a sample
 ```{r}
-getPoisson<-function(){
-  a=-1
-  while(a<0 | a>4){
-    a=rpois(1, 1)
-  }
-  return(a)
-}
-getClonotype<-function(clonotype_index){
-  numberA=getPoisson()
-  numberB=getPoisson()
-  result=DataFrame()
-  indexInPool=sample.int(poolSize, 1, replace=TRUE)
-  if (numberA>=1){
-    result=rbind(result,samplePool[[indexInPool]][1,])
-    numberA=numberA-1
-  }
-  if (numberB>=1){
-    result=rbind(result,samplePool[[indexInPool]][2,])
-    numberB=numberB-1
-  }
-  while(numberA>0 | numberB>0){
+getClonotype<-function(clonotype_index, numberA, numberB){
+    result=DataFrame()
     indexInPool=sample.int(poolSize, 1, replace=TRUE)
+    whichClono <- sample(nrow(Truth), 1, prob = Truth$prop)
     if (numberA>=1){
-      result=rbind(result,samplePool[[indexInPool]][1,])
-      numberA=numberA-1
+        result=rbind(result,samplePool[[indexInPool]][1,])
+        numberA=numberA-1
     }
-    else{
-      result=rbind(result,samplePool[[indexInPool]][2,])
-      numberB=numberB-1
+    if (numberB>=1){
+        result=rbind(result,samplePool[[indexInPool]][2,])
+        numberB=numberB-1
     }
-  }
-  if(length(result$barcode)){
-    new_barcode=paste(result$barcode[1],clonotype_index,sep=' ')
-    for(i in 1:length(result$barcode)){
-      #result$barcode[i]=result$barcode[1]
-      result$barcode[i]=new_barcode
-      result$sample[i]='sim'
+    while(numberA>0 | numberB>0){
+        indexInPool=sample.int(poolSize, 1, replace=TRUE)
+        if (numberA>=1){
+            result=rbind(result,samplePool[[indexInPool]][1,])
+            numberA=numberA-1
+        }
+        else{
+            result=rbind(result,samplePool[[indexInPool]][2,])
+            numberB=numberB-1
+        }
     }
-  }
-  return(result)
-
+    return(result)
+    
 }
 ```
 
@@ -106,15 +90,31 @@ getClonotype<-function(clonotype_index){
 
 However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
 ```{r}
-getSample<-function(samplesize){
-  sample=DataFrame()
-  for(clonotype_index in 1:samplesize){
-    sample=rbind(sample,getClonotype(clonotype_index))
-  }
-  samplelist<-split(sample,sample$barcode)
-  # sample1<-as(sample,'SplitDFrameList')
-  return(samplelist)
-  
+getSample <- function(samplesize){
+    sample=DataFrame()
+    
+    nAlpha <- rpois(samplesize, 1)
+    while(any(nAlpha > 4)){
+        nAlpha[nAlpha > 4] <- rpois(sum(nAlpha > 4), 1)
+    }
+    nBeta <- rpois(samplesize, 1)
+    while(any(nBeta > 4)){
+        nBeta[nBeta > 4] <- rpois(sum(nBeta > 4), 1)
+    }
+    barcode <- paste('cell', 1:samplesize)
+    
+    
+    sample <- lapply(1:samplesize, function(clonotype_index){
+        getClonotype(clonotype_index, nAlpha[clonotype_index], nBeta[clonotype_index])
+    })
+    sample <- SplitDataFrameList(sample)
+    sample[,'barcode'] <- barcode
+    sample[,'sample'] <- 'sim'
+    names(sample) <- barcode
+ 
+    # sample1<-as(sample,'SplitDFrameList')
+    return(sample)
+    
 }
 # samplelist=getSample(SampleSize)
 # EMpredicted <- clonoStats(samplelist, method = 'EM')
