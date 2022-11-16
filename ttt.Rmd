@@ -101,20 +101,17 @@ However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how 
 ```{r}
 getSample <- function(samplesize){
     sample=DataFrame()
-    
-    nAlpha <- rpois(samplesize, 1)
-    while(any(nAlpha > 4)){
-        nAlpha[nAlpha > 4] <- rpois(sum(nAlpha > 4), 1)
-    }
-    nBeta <- rpois(samplesize, 1)
-    while(any(nBeta > 4)){
-        nBeta[nBeta > 4] <- rpois(sum(nBeta > 4), 1)
-    }
+    DistributeTRA=sum(sce0$contigs[,'chain']=='TRA')
+    DistributeTRB=sum(sce0$contigs[,'chain']=='TRB')
+    # table(DistributeTRA,DistributeTRB)
+    IndexnAnBMap=cbind(DistributeTRA,DistributeTRB)
+    RandomIntegers <- sample(1:1000, samplesize, replace=T)
+
     barcode <- paste('cell', 1:samplesize)
     
     
     sample <- lapply(1:samplesize, function(clonotype_index){
-        getClonotype(clonotype_index, nAlpha[clonotype_index], nBeta[clonotype_index])
+        getClonotype(clonotype_index, IndexnAnBMap[RandomIntegers[clonotype_index],1], IndexnAnBMap[RandomIntegers[clonotype_index],2])
     })
     sample <- SplitDataFrameList(sample)
     sample[,'barcode'] <- barcode
