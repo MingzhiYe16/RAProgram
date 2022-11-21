@@ -43,17 +43,43 @@ for (i in 1:length(sce0$contigs)){
 
 # Generate sample pool
 ```{r}
-samplePool=DataFrameList()
-poolSize=1
+OriginalSamplePool=DataFrameList()
+OriginalPoolSize=1
 for (i in 1:length(sce0$contigs)){
   if(length(sce0$contigs[[i]]$chain)==2 & sce0$contigs[[i]]$chain[1]=='TRA' & sce0$contigs[[i]]$chain[2]=='TRB'){
     
-    samplePool[[poolSize]]=sce0$contigs[[i]]
-    poolSize=poolSize+1
+    OriginalSamplePool[[OriginalPoolSize]]=sce0$contigs[[i]]
+    OriginalPoolSize=OriginalPoolSize+1
   }
   
 }
+OriginalPoolSize=OriginalPoolSize-1
+
+
+# Assignment different possiblity for each clonotype
+
+assigned_num=rpois(OriginalPoolSize, 1)
+assigned_num=assigned_num+1
+assigned_index=c()
+cursor=1
+for (i in 1:length(assigned_num)){
+  for(j in 1:assigned_num[i]){
+    assigned_index[cursor]=i
+    cursor=cursor+1
+  }
+}
+samplePool=DataFrameList()
+poolSize=1
+for (i in 1:length(assigned_index)){
+  
+    
+    samplePool[[poolSize]]=OriginalSamplePool[[assigned_index[i]]]
+    poolSize=poolSize+1
+  
+  
+}
 poolSize=poolSize-1
+
 ```
 
 # Functions for generate a sample
@@ -105,7 +131,7 @@ getSample <- function(samplesize){
     DistributeTRB=sum(sce0$contigs[,'chain']=='TRB')
     # table(DistributeTRA,DistributeTRB)
     IndexnAnBMap=cbind(DistributeTRA,DistributeTRB)
-    RandomIntegers <- sample(1:1000, samplesize, replace=T)
+    RandomIntegers <- sample(1:poolSize, samplesize, replace=T)
 
     barcode <- paste('cell', 1:samplesize)
     
@@ -183,8 +209,8 @@ getDistance<-function(predicted){
 ```{r,message = FALSE,warning = FALSE}
 DistanceListFromEM=c()
 DistanceListFromUN=c()
-for(i in 1:50){
-  samplelist=getSample(2000)
+for(i in 1:10){
+  samplelist=getSample(1000)
   EMpredicted <- clonoStats(samplelist, method = 'EM')
   distance1=getDistance(EMpredicted)
   DistanceListFromEM[i]=distance1
