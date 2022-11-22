@@ -32,54 +32,55 @@ sce0 <- readRDS('toyTCRdata.rds')
 sce <- clonoStats(sce0, method = 'EM')
 
 #A<-sce0$contigs[sce0$contigs[, 'chain'] %in% c('TRA','TRB')]
-for (i in 1:length(sce0$contigs)){
-  #sce0$contigs[[i]]  "DFrame"  "S4Vectors"
-  #sce0$contigs[[i]]<-sce0$contigs[[i]] %>% filter(chain %in% c("TRA","TRB"))
-  #sce0$contigs[[i]]<-sce0$contigs[[i]][filter(sce0$contigs[[i]]$chain %in% c("TRA","TRB")),]
-  sce0$contigs[[i]]<-sce0$contigs[[i]][order(sce0$contigs[[i]]$chain),]
-  
-}
+# for (i in 1:length(sce0$contigs)){
+#   #sce0$contigs[[i]]  "DFrame"  "S4Vectors"
+#   #sce0$contigs[[i]]<-sce0$contigs[[i]] %>% filter(chain %in% c("TRA","TRB"))
+#   #sce0$contigs[[i]]<-sce0$contigs[[i]][filter(sce0$contigs[[i]]$chain %in% c("TRA","TRB")),]
+#   sce0$contigs[[i]]<-sce0$contigs[[i]][order(sce0$contigs[[i]]$chain),]
+#   
+# }
 ```
 
 # Generate sample pool
 ```{r}
-OriginalSamplePool=DataFrameList()
-OriginalPoolSize=1
-for (i in 1:length(sce0$contigs)){
-  if(length(sce0$contigs[[i]]$chain)==2 & sce0$contigs[[i]]$chain[1]=='TRA' & sce0$contigs[[i]]$chain[2]=='TRB'){
+AmiNoAcids=c('A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V')
+getCDR3 <- function(x){
+  
+  cdr3=sample(AmiNoAcids,15, replace=T)
+  return(paste(cdr3,collapse = ''))
+}
+poolSize=1000
+TemplateClonotype=sce0$contigs[[4]][c(2,1),]
+getClonotypeForPool<-function(clonotype_index, CDRAlpha, CDRBeta){
+    result=TemplateClonotype
+    result$cdr3[1]=CDRAlpha
+    result$cdr3[2]=CDRBeta
+    return(result)
+}
+getSamplePool <- function(poolSize){
+    Alpha_pool=sapply(1:poolSize,getCDR3,simplify = TRUE)
+    Beta_pool=sapply(1:poolSize,getCDR3,simplify = TRUE)
     
-    OriginalSamplePool[[OriginalPoolSize]]=sce0$contigs[[i]]
-    OriginalPoolSize=OriginalPoolSize+1
-  }
+    CDR_Alpha=sample(Alpha_pool,poolSize, replace=T)
+    CDR_Beta=sample(Beta_pool,poolSize, replace=T)
   
-}
-OriginalPoolSize=OriginalPoolSize-1
 
-
-# Assignment different possiblity for each clonotype
-
-assigned_num=rpois(OriginalPoolSize, 1)
-assigned_num=assigned_num+1
-assigned_index=c()
-cursor=1
-for (i in 1:length(assigned_num)){
-  for(j in 1:assigned_num[i]){
-    assigned_index[cursor]=i
-    cursor=cursor+1
-  }
-}
-samplePool=DataFrameList()
-poolSize=1
-for (i in 1:length(assigned_index)){
-  
+    barcode <- paste('cell', 1:poolSize)
     
-    samplePool[[poolSize]]=OriginalSamplePool[[assigned_index[i]]]
-    poolSize=poolSize+1
-  
-  
+    
+    samplePool <- lapply(1:poolSize, function(clonotype_index){
+        getClonotypeForPool(clonotype_index, CDR_Alpha[clonotype_index], CDR_Beta[clonotype_index])
+    })
+    samplePool <- SplitDataFrameList(samplePool)
+    samplePool[,'barcode'] <- barcode
+    samplePool[,'sample'] <- 'sim'
+    names(samplePool) <- barcode
+ 
+    # sample1<-as(sample,'SplitDFrameList')
+    return(samplePool)
+    
 }
-poolSize=poolSize-1
-
+samplePool=getSamplePool(1000)
 ```
 
 # Functions for generate a sample
