@@ -43,13 +43,15 @@ sce <- clonoStats(sce0, method = 'EM')
 
 # Generate sample pool
 ```{r}
+poolSize=30000
+SampleSize=50000
 AmiNoAcids=c('A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V')
 getCDR3 <- function(x){
   
   cdr3=sample(AmiNoAcids,15, replace=T)
   return(paste(cdr3,collapse = ''))
 }
-poolSize=1000
+
 TemplateClonotype=sce0$contigs[[4]][c(2,1),]
 getClonotypeForPool<-function(clonotype_index, CDRAlpha, CDRBeta){
     result=TemplateClonotype
@@ -80,7 +82,7 @@ getSamplePool <- function(poolSize){
     return(samplePool)
     
 }
-samplePool=getSamplePool(1000)
+samplePool=getSamplePool(poolSize)
 ```
 
 # Functions for generate a sample
@@ -210,8 +212,8 @@ getDistance<-function(predicted){
 ```{r,message = FALSE,warning = FALSE}
 DistanceListFromEM=c()
 DistanceListFromUN=c()
-for(i in 1:10){
-  samplelist=getSample(1000)
+for(i in 1:20){
+  samplelist=getSample(SampleSize)
   EMpredicted <- clonoStats(samplelist, method = 'EM')
   distance1=getDistance(EMpredicted)
   DistanceListFromEM[i]=distance1
