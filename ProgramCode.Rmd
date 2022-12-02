@@ -134,7 +134,7 @@ getSample <- function(samplesize){
     DistributeTRB=sum(sce0$contigs[,'chain']=='TRB')
     # table(DistributeTRA,DistributeTRB)
     IndexnAnBMap=cbind(DistributeTRA,DistributeTRB)
-    RandomIntegers <- sample(1:poolSize, samplesize, replace=T)
+    RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
 
     barcode <- paste('cell', 1:samplesize)
     
@@ -222,7 +222,27 @@ for(i in 1:20){
   DistanceListFromUN[i]=distance2
   print(i)
 }
+```
 
+# Test
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+time0=Sys.time()
+samplelist=getSample(500000)
+time1=Sys.time()
+print(time1-time0)
+EMpredicted <- clonoStats(samplelist, method = 'EM')
+time2=Sys.time()
+print(time2-time1)
+distance1=getDistance(EMpredicted)
+time3=Sys.time()
+print(time3-time2)
+UNpredicted <- clonoStats(samplelist, method = 'unique')
+time4=Sys.time()
+print(time4-time3)
+distance2=getDistance(UNpredicted)
+time5=Sys.time()
+print(time5-time4)
 ```
 
 
