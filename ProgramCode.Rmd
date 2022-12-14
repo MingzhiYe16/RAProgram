@@ -43,8 +43,8 @@ sce <- clonoStats(sce0, method = 'EM')
 
 # Generate sample pool
 ```{r}
-poolSize=30000
-SampleSize=50000
+poolSize=2000
+SampleSize=5000
 AmiNoAcids=c('A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V')
 getCDR3 <- function(x){
   
@@ -90,34 +90,51 @@ samplePool=getSamplePool(poolSize)
 getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
     result=DataFrame()
     indexInPool=sample.int(poolSize, 3, replace=FALSE)
+    setAlpha <- hashset()
+    setBeta <- hashset()
 
     if (numberA>=1){
         if(runif(1) < errorProb){
           result=rbind(result,samplePool[[indexInPool[2]]][1,])
+          insert(setAlpha,indexInPool[2])
         }else{
           result=rbind(result,samplePool[[indexInPool[1]]][1,])
+          insert(setAlpha,indexInPool[1])
         }
         numberA=numberA-1
     }
     if (numberB>=1){
         if(runif(1) < errorProb){
           result=rbind(result,samplePool[[indexInPool[3]]][2,])
+          insert(setBeta,indexInPool[3])
         }else{
           result=rbind(result,samplePool[[indexInPool[1]]][2,])
+          insert(setBeta,indexInPool[1])
         }
 
         numberB=numberB-1
     }
-    while(numberA>0 | numberB>0){
+    while(numberA>0){
         indexInPool=sample.int(poolSize, 1, replace=TRUE)
-        if (numberA>=1){
-            result=rbind(result,samplePool[[indexInPool]][1,])
-            numberA=numberA-1
+        while(setAlpha[indexInPool]==TRUE){
+          indexInPool=sample.int(poolSize, 1, replace=TRUE)
         }
-        else{
-            result=rbind(result,samplePool[[indexInPool]][2,])
-            numberB=numberB-1
+        insert(setAlpha,indexInPool)
+        result=rbind(result,samplePool[[indexInPool]][1,])
+        numberA=numberA-1
+
+        
+    }
+    while(numberB>0){
+        indexInPool=sample.int(poolSize, 1, replace=TRUE)
+        while(setBeta[indexInPool]==TRUE){
+          indexInPool=sample.int(poolSize, 1, replace=TRUE)
         }
+        insert(setBeta,indexInPool)
+        result=rbind(result,samplePool[[indexInPool]][2,])
+        numberB=numberB-1
+        
+
     }
     return(result)
     
@@ -207,28 +224,11 @@ getDistance<-function(predicted){
 }
 ```
 
-# Calculate distances for samples
-
-```{r,message = FALSE,warning = FALSE}
-DistanceListFromEM=c()
-DistanceListFromUN=c()
-for(i in 1:20){
-  samplelist=getSample(SampleSize)
-  EMpredicted <- clonoStats(samplelist, method = 'EM')
-  distance1=getDistance(EMpredicted)
-  DistanceListFromEM[i]=distance1
-  UNpredicted <- clonoStats(samplelist, method = 'unique')
-  distance2=getDistance(UNpredicted)
-  DistanceListFromUN[i]=distance2
-  print(i)
-}
-```
-
 # Test
 
-```{r, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, message = FALSE, warning = FALSE,eval=FALSE}
 time0=Sys.time()
-samplelist=getSample(500000)
+samplelist=getSample(5000)
 time1=Sys.time()
 print(time1-time0)
 EMpredicted <- clonoStats(samplelist, method = 'EM')
@@ -246,6 +246,25 @@ print(time5-time4)
 ```
 
 
+# Calculate distances for samples
+
+```{r,message = FALSE,warning = FALSE}
+DistanceListFromEM=c()
+DistanceListFromUN=c()
+for(i in 1:20){
+  samplelist=getSample(SampleSize)
+  EMpredicted <- clonoStats(samplelist, method = 'EM')
+  distance1=getDistance(EMpredicted)
+  DistanceListFromEM[i]=distance1
+  UNpredicted <- clonoStats(samplelist, method = 'unique')
+  distance2=getDistance(UNpredicted)
+  DistanceListFromUN[i]=distance2
+}
+```
+
+
+
+
 # Visualize
 ```{r}
 boxplot(DistanceListFromEM)
@@ -257,3 +276,4 @@ print(median(DistanceListFromUN))
 print(mean(DistanceListFromEM))
 print(mean(DistanceListFromUN))
 ```
+
