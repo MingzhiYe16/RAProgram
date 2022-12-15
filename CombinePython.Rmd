@@ -1,0 +1,64 @@
+---
+title: "RAProject"
+author: "Mingzhi Ye"
+date: "2022/10/10"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,include = FALSE}
+library(VDJdive)
+library(tidyverse)
+require(SingleCellExperiment)
+library(r2r)
+library(reticulate)
+use_virtualenv('C:/Users/yemin/PycharmProjects/RAProject/venv')
+source_python("./main.py")
+```
+
+
+
+# Calculate distances for samples
+
+```{r,message = FALSE,warning = FALSE}
+DistanceListFromEM=c()
+DistanceListFromUN=c()
+for(i in 1:20){
+  sample=getSample()
+  
+  sample$high_confidence<-as.logical(sample$high_confidence)
+  sample$productive<-as.logical(sample$productive)
+  sample$full_length<-as.logical(sample$full_length)
+  sample$is_cell<-as.logical(sample$is_cell)
+  
+  samplelist <- split(sample, f = sample$barcode)
+  samplelist  <- SplitDataFrameList(samplelist)
+  
+  EMpredicted <- clonoStats(samplelist, method = 'EM')
+  distance1=getDistance(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+  DistanceListFromEM[i]=distance1
+  
+  UNpredicted <- clonoStats(samplelist, method = 'unique')
+  distance2=getDistance(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+  DistanceListFromUN[i]=distance2
+}
+```
+
+
+
+
+# Visualize
+```{r}
+boxplot(DistanceListFromEM)
+hist(DistanceListFromEM)
+boxplot(DistanceListFromUN)
+hist(DistanceListFromUN)
+print(median(DistanceListFromEM))
+print(median(DistanceListFromUN))
+print(mean(DistanceListFromEM))
+print(mean(DistanceListFromUN))
+```
+
