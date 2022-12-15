@@ -15,30 +15,18 @@ library(tidyverse)
 require(SingleCellExperiment)
 library(r2r)
 
-
-
-# metadata(sce)$clonoStats
-# clonoAbundance(sce)
-# clonoFrequency(sce)
-# EMstats <- clonoStats(sce, method = "EM")
-# 
-# EMstats2=metadata(EMstats)$clonoStats
-# barVDJ(EMstats2, title = "contigs", legend = TRUE)
-# abundanceVDJ(EMstats2)
 ```
 
+# Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
+```{r}
+IndexnAnBMap=read.csv("IndexnAnBMap.csv",header = F)
+IndexnAnBMap=as.matrix(IndexnAnBMap)
+```
+
+# Get a template dataframe of a clonotype which has one alpha chain and one beta chain
 ```{r}
 sce0 <- readRDS('toyTCRdata.rds')
-sce <- clonoStats(sce0, method = 'EM')
-
-#A<-sce0$contigs[sce0$contigs[, 'chain'] %in% c('TRA','TRB')]
-# for (i in 1:length(sce0$contigs)){
-#   #sce0$contigs[[i]]  "DFrame"  "S4Vectors"
-#   #sce0$contigs[[i]]<-sce0$contigs[[i]] %>% filter(chain %in% c("TRA","TRB"))
-#   #sce0$contigs[[i]]<-sce0$contigs[[i]][filter(sce0$contigs[[i]]$chain %in% c("TRA","TRB")),]
-#   sce0$contigs[[i]]<-sce0$contigs[[i]][order(sce0$contigs[[i]]$chain),]
-#   
-# }
+TemplateClonotype=sce0$contigs[[4]][c(2,1),]
 ```
 
 # Generate sample pool
@@ -52,7 +40,8 @@ getCDR3 <- function(x){
   return(paste(cdr3,collapse = ''))
 }
 
-TemplateClonotype=sce0$contigs[[4]][c(2,1),]
+
+
 getClonotypeForPool<-function(clonotype_index, CDRAlpha, CDRBeta){
     result=TemplateClonotype
     result$cdr3[1]=CDRAlpha
@@ -65,6 +54,8 @@ getSamplePool <- function(poolSize){
     
     CDR_Alpha=sample(Alpha_pool,poolSize, replace=T)
     CDR_Beta=sample(Beta_pool,poolSize, replace=T)
+    
+    
   
 
     barcode <- paste('cell', 1:poolSize)
@@ -83,6 +74,23 @@ getSamplePool <- function(poolSize){
     
 }
 samplePool=getSamplePool(poolSize)
+```
+
+# Generate the dataframe recording the abundance for each clonotype in the sample pool
+```{r}
+clonotypes_in_pool=samplePool[,'cdr3']
+concatCDR3<-function(x){
+  res=paste(x[1],x[2],sep=' ')
+    res=paste(x[1],x[2],sep=' ')
+    return(res)
+}
+clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
+clonotypes_in_pool=unlist(clonotypes_in_pool)
+abundance=rep(1/poolSize,poolSize)
+realDF<- data.frame(clonotypes_in_pool,abundance)
+rownames(realDF) <- NULL
+realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+colnames(realDF) <- c('clonotype','abundance')
 ```
 
 # Functions for generate a sample
@@ -146,11 +154,6 @@ getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
 However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
 ```{r}
 getSample <- function(samplesize){
-    sample=DataFrame()
-    DistributeTRA=sum(sce0$contigs[,'chain']=='TRA')
-    DistributeTRB=sum(sce0$contigs[,'chain']=='TRB')
-    # table(DistributeTRA,DistributeTRB)
-    IndexnAnBMap=cbind(DistributeTRA,DistributeTRB)
     RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
 
     barcode <- paste('cell', 1:samplesize)
@@ -177,53 +180,21 @@ getSample <- function(samplesize){
 ```
 
 
-# Generate hashmap. Key is clonotype in Truth(sample pool), Value is percentage of the clonotype in Truth
-
-```{r}
-
-TruthPercentageMap=hashmap()
-
-for(i in 1:poolSize){
-  
-  key=paste(samplePool[[i]]$cdr3[1],samplePool[[i]]$cdr3[2],sep=' ')
-  
-  if(is.null(TruthPercentageMap[[key]])){
-    TruthPercentageMap[[key]]<-1/poolSize
-  }
-  else{
-    TruthPercentageMap[[key]]<-TruthPercentageMap[[key]]+1/poolSize
-  }
-  
-}
-
-
-
-```
-
 # Get Variation Distance
+
 ```{r}
-getDistance<-function(predicted){
+getDistance_R<-function(clonotype,abundance){
+  stimulated<- data.frame(clonotype,abundance)
 
-  clonotypes=clonoNames(predicted)
-  abundance=clonoAbundance(predicted)
-  SumAbundance=sum(abundance)
-  distance=0
-  seen <- hashmap()
-  for(i in 1:length(abundance)){
-    if(is.null(TruthPercentageMap[[clonotypes[i]]])){
-      distance=distance+abundance[i]/SumAbundance
-    }
-    else{
-      seen[[clonotypes[i]]]<-TruthPercentageMap[[clonotypes[i]]]
-      distance=distance+abs(abundance[i]/SumAbundance-TruthPercentageMap[[clonotypes[i]]])
-    }
-  }
+  sum_abundance=sum(stimulated['abundance'])
+  stimulated['abundance']=stimulated['abundance']/sum_abundance
   
-  distance=distance+Reduce("+", values(TruthPercentageMap)) -Reduce("+", values(seen)) 
-  return(distance)
+  merged = merge(x = realDF, y = stimulated, by = "clonotype",all = TRUE)
+  merged[is.na(merged)] <- 0
+  return (sum(abs(merged['abundance.x']-merged['abundance.y'])))
 }
-```
 
+```
 # Test
 
 ```{r, message = FALSE, warning = FALSE,eval=FALSE}
@@ -234,13 +205,13 @@ print(time1-time0)
 EMpredicted <- clonoStats(samplelist, method = 'EM')
 time2=Sys.time()
 print(time2-time1)
-distance1=getDistance(EMpredicted)
+distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
 time3=Sys.time()
 print(time3-time2)
 UNpredicted <- clonoStats(samplelist, method = 'unique')
 time4=Sys.time()
 print(time4-time3)
-distance2=getDistance(UNpredicted)
+distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
 time5=Sys.time()
 print(time5-time4)
 ```
@@ -254,10 +225,10 @@ DistanceListFromUN=c()
 for(i in 1:20){
   samplelist=getSample(SampleSize)
   EMpredicted <- clonoStats(samplelist, method = 'EM')
-  distance1=getDistance(EMpredicted)
+  distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
   DistanceListFromEM[i]=distance1
   UNpredicted <- clonoStats(samplelist, method = 'unique')
-  distance2=getDistance(UNpredicted)
+  distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
   DistanceListFromUN[i]=distance2
 }
 ```
