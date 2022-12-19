@@ -44,7 +44,7 @@ def getSample():
             res.append('TRB')
         return res
 
-    chains=[getChainTypes(i) for i in range(PoolSize)]
+    chains=[getChainTypes(i) for i in range(SampleSize)]
     chains = [item for sublist in chains for item in sublist]
 
     def getBarcode(i):
@@ -54,7 +54,7 @@ def getSample():
 
         return res
 
-    barcodes=[getBarcode(i) for i in range(PoolSize)]
+    barcodes=[getBarcode(i) for i in range(SampleSize)]
     barcodes = [item for sublist in barcodes for item in sublist]
 
     def getCDR3sForCertainClonotype(i):
@@ -98,7 +98,7 @@ def getSample():
 
         return result[0]+result[1]
 
-    CDR3=[getCDR3sForCertainClonotype(i) for i in range(PoolSize)]
+    CDR3=[getCDR3sForCertainClonotype(i) for i in range(SampleSize)]
     CDR3 = [item for sublist in CDR3 for item in sublist]
 
     num_of_chain=len(chains)
