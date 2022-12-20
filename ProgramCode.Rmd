@@ -17,6 +17,12 @@ library(r2r)
 
 ```
 
+#Global parameter
+```{r}
+poolSize=2000
+SampleSize=5000
+```
+
 # Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
 ```{r}
 IndexnAnBMap=read.csv("IndexnAnBMap.csv",header = F)
@@ -29,10 +35,23 @@ sce0 <- readRDS('toyTCRdata.rds')
 TemplateClonotype=sce0$contigs[[4]][c(2,1),]
 ```
 
+# Generate a map which map generated random int to the index in sample pool
+
+```{r}
+MapRandomIntToIndex=rgeom(poolSize, .25)+1
+getRep <- function(x){
+  
+  
+  return(rep(x,MapRandomIntToIndex[x]))
+}
+MapRandomIntToIndex=sapply(1:poolSize,getRep,simplify = TRUE)
+MapRandomIntToIndex=unlist(MapRandomIntToIndex)
+MapLength=length(MapRandomIntToIndex)
+```
+
 # Generate sample pool
 ```{r}
-poolSize=2000
-SampleSize=5000
+
 AmiNoAcids=c('A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V')
 getCDR3 <- function(x){
   
@@ -97,7 +116,8 @@ colnames(realDF) <- c('clonotype','abundance')
 ```{r}
 getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
     result=DataFrame()
-    indexInPool=sample.int(poolSize, 3, replace=FALSE)
+    indexInPool=sample.int(MapLength, 3, replace=FALSE)
+    indexInPool=MapRandomIntToIndex[indexInPool]
     setAlpha <- hashset()
     setBeta <- hashset()
 
@@ -123,9 +143,11 @@ getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
         numberB=numberB-1
     }
     while(numberA>0){
-        indexInPool=sample.int(poolSize, 1, replace=TRUE)
+        indexInPool=sample.int(MapLength, 1, replace=TRUE)
+        indexInPool=MapRandomIntToIndex[indexInPool]
         while(setAlpha[indexInPool]==TRUE){
-          indexInPool=sample.int(poolSize, 1, replace=TRUE)
+          indexInPool=sample.int(MapLength, 1, replace=TRUE)
+          indexInPool=MapRandomIntToIndex[indexInPool]
         }
         insert(setAlpha,indexInPool)
         result=rbind(result,samplePool[[indexInPool]][1,])
@@ -134,9 +156,11 @@ getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
         
     }
     while(numberB>0){
-        indexInPool=sample.int(poolSize, 1, replace=TRUE)
+        indexInPool=sample.int(MapLength, 1, replace=TRUE)
+        indexInPool=MapRandomIntToIndex[indexInPool]
         while(setBeta[indexInPool]==TRUE){
-          indexInPool=sample.int(poolSize, 1, replace=TRUE)
+          indexInPool=sample.int(MapLength, 1, replace=TRUE)
+          indexInPool=MapRandomIntToIndex[indexInPool]
         }
         insert(setBeta,indexInPool)
         result=rbind(result,samplePool[[indexInPool]][2,])

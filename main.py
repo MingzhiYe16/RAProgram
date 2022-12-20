@@ -1,6 +1,7 @@
 import csv
 import random
 import pandas as pd
+import numpy
 
 # Global parameter
 PoolSize=2000
@@ -25,6 +26,10 @@ with open('IndexnAnBMap.csv', 'r') as csvfile:
         IndexnAnBMap.append(row)
 IndexnAnBMap=[[int(x[0]),int(x[1])] for x in IndexnAnBMap]
 
+MapRandomIntToIndex=[numpy.random.geometric(0.25,1)[0] for i in range(PoolSize)]
+MapRandomIntToIndex=[[i]*MapRandomIntToIndex[i] for i in range(PoolSize)]
+MapRandomIntToIndex = [item for sublist in MapRandomIntToIndex for item in sublist]
+MapLength=len(MapRandomIntToIndex)
 
 real_clonotypes=[x[0]+' '+x[1] for x in SamplePool]
 real_abundance=[1/PoolSize for i in range(PoolSize)]
@@ -60,7 +65,8 @@ def getSample():
     def getCDR3sForCertainClonotype(i):
         result=[[],[]]
         numberA,numberB=NumOfChains[i][0],NumOfChains[i][1]
-        indexInPool = random.sample(range(PoolSize), 3)
+        indexInPool = random.sample(range(MapLength), 3)
+        indexInPool=[MapRandomIntToIndex[x] for x in indexInPool]
         usedA,usedB=set(),set()
         if numberA >= 1:
             if random.uniform(0,1) >= errorProb:
@@ -81,17 +87,21 @@ def getSample():
         numberB-=1
 
         while numberA > 0:
-            indexInPool=random.randint(0, PoolSize-1)
+            indexInPool=random.randint(0, MapLength-1)
+            indexInPool=MapRandomIntToIndex[indexInPool]
             while indexInPool in usedA:
                 indexInPool = random.randint(0, PoolSize - 1)
+                indexInPool = MapRandomIntToIndex[indexInPool]
             usedA.add(indexInPool)
             result[0].append(SamplePool[indexInPool][0])
             numberA-=1
 
         while numberB > 0:
-            indexInPool=random.randint(0, PoolSize-1)
+            indexInPool=random.randint(0, MapLength-1)
+            indexInPool = MapRandomIntToIndex[indexInPool]
             while indexInPool in usedB:
                 indexInPool = random.randint(0, PoolSize - 1)
+                indexInPool = MapRandomIntToIndex[indexInPool]
             usedB.add(indexInPool)
             result[1].append(SamplePool[indexInPool][1])
             numberB-=1
