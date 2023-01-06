@@ -35,21 +35,7 @@ sce0 <- readRDS('toyTCRdata.rds')
 TemplateClonotype=sce0$contigs[[4]][c(2,1),]
 ```
 
-# Generate a map which map generated random int to the index in sample pool
-
-```{r}
-MapRandomIntToIndex=rgeom(poolSize, .25)+1
-getRep <- function(x){
-  
-  
-  return(rep(x,MapRandomIntToIndex[x]))
-}
-MapRandomIntToIndex=sapply(1:poolSize,getRep,simplify = TRUE)
-MapRandomIntToIndex=unlist(MapRandomIntToIndex)
-MapLength=length(MapRandomIntToIndex)
-```
-
-# Generate sample pool
+# Generate a CDR3
 ```{r}
 
 AmiNoAcids=c('A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V')
@@ -58,16 +44,45 @@ getCDR3 <- function(x){
   cdr3=sample(AmiNoAcids,15, replace=T)
   return(paste(cdr3,collapse = ''))
 }
+```
 
 
-
+# Generate a Clonotype in sample pool
+```{r}
 getClonotypeForPool<-function(clonotype_index, CDRAlpha, CDRBeta){
     result=TemplateClonotype
     result$cdr3[1]=CDRAlpha
     result$cdr3[2]=CDRBeta
     return(result)
 }
-getSamplePool <- function(poolSize){
+```
+
+
+# Generate a map which map generated random int to the index in sample pool
+```{r}
+getMapRandomIntToIndex<-function(poolSize,Num_of_Repeat){
+    
+    MapRandomIntToIndex=Num_of_Repeat
+    getRep <- function(x){
+      
+      
+      return(rep(x,MapRandomIntToIndex[x]))
+    }
+    MapRandomIntToIndex=sapply(1:poolSize,getRep,simplify = TRUE)
+    MapRandomIntToIndex=unlist(MapRandomIntToIndex)
+    MapLength=length(MapRandomIntToIndex)
+    return(MapRandomIntToIndex)
+}
+#MapRandomIntToIndex=getMapRandomIntToIndex(poolSize)
+```
+
+# Generate sample pool
+```{r}
+getSamplePool <- function(poolSize,MapRandomIntToIndex){
+
+    
+    
+
     Alpha_pool=sapply(1:poolSize,getCDR3,simplify = TRUE)
     Beta_pool=sapply(1:poolSize,getCDR3,simplify = TRUE)
     
@@ -92,30 +107,16 @@ getSamplePool <- function(poolSize){
     return(samplePool)
     
 }
-samplePool=getSamplePool(poolSize)
+#samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
 ```
 
-# Generate the dataframe recording the abundance for each clonotype in the sample pool
-```{r}
-clonotypes_in_pool=samplePool[,'cdr3']
-concatCDR3<-function(x){
-  res=paste(x[1],x[2],sep=' ')
-    res=paste(x[1],x[2],sep=' ')
-    return(res)
-}
-clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
-clonotypes_in_pool=unlist(clonotypes_in_pool)
-abundance=rep(1/poolSize,poolSize)
-realDF<- data.frame(clonotypes_in_pool,abundance)
-rownames(realDF) <- NULL
-realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
-colnames(realDF) <- c('clonotype','abundance')
-```
+
 
 # Functions for generate a sample
 ```{r}
-getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
+getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, samplePool, errorProb = .01){
     result=DataFrame()
+    MapLength=length(MapRandomIntToIndex)
     indexInPool=sample.int(MapLength, 3, replace=FALSE)
     indexInPool=MapRandomIntToIndex[indexInPool]
     setAlpha <- hashset()
@@ -177,14 +178,14 @@ getClonotype<-function(clonotype_index, numberA, numberB, errorProb = .01){
 
 However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
 ```{r}
-getSample <- function(samplesize){
+getSample <- function(samplesize,MapRandomIntToIndex,samplePool){
     RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
 
     barcode <- paste('cell', 1:samplesize)
     
     
     sample <- lapply(1:samplesize, function(clonotype_index){
-        getClonotype(clonotype_index, IndexnAnBMap[RandomIntegers[clonotype_index],1], IndexnAnBMap[RandomIntegers[clonotype_index],2])
+        getClonotype(clonotype_index, IndexnAnBMap[RandomIntegers[clonotype_index],1], IndexnAnBMap[RandomIntegers[clonotype_index],2], MapRandomIntToIndex, samplePool)
     })
     sample <- SplitDataFrameList(sample)
     sample[,'barcode'] <- barcode
@@ -203,11 +204,99 @@ getSample <- function(samplesize){
 
 ```
 
+#Merge the dataframe
+```{r}
+getMerged<-function(clonotype,abundance,merged){
+  stimulated<- data.frame(clonotype,abundance)
+
+  sum_abundance=sum(stimulated['abundance'])
+  stimulated['abundance']=stimulated['abundance']/sum_abundance
+  
+  merged = merge(x = merged, y = stimulated, by = "clonotype",all = TRUE)
+  merged[is.na(merged)] <- 0
+  return(merged)
+}
+
+```
+
+# Generate table
+```{r,warning=FALSE}
+getResultTable <- function(poolSize,SampleSize,RepeatTimes){
+  Num_of_Repeat=rgeom(poolSize, .25)+1
+  MapRandomIntToIndex=getMapRandomIntToIndex(poolSize,Num_of_Repeat)
+  samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
+  
+  # Generate the dataframe recording the abundance for each clonotype in the sample pool
+  clonotypes_in_pool=samplePool[,'cdr3']
+  
+  concatCDR3<-function(x){
+    res=paste(x[1],x[2],sep=' ')
+      res=paste(x[1],x[2],sep=' ')
+      return(res)
+  }
+  clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
+  clonotypes_in_pool=unlist(clonotypes_in_pool)
+  Sum_of_Repeat=sum(Num_of_Repeat)
+  abundance=Num_of_Repeat/Sum_of_Repeat
+  realDF<- data.frame(clonotypes_in_pool,abundance)
+  rownames(realDF) <- NULL
+  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+  colnames(realDF) <- c('clonotype','abundance')
+  
+  merged=realDF
+  for(i in 1:RepeatTimes){
+    samplelist=getSample(SampleSize,MapRandomIntToIndex, samplePool)
+    
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    merged= getMerged(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],merged)
+
+    
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    merged= getMerged(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],merged)
+
+  }
+  ColumnNames=rep(c('EM','UN'),RepeatTimes)
+  ColumnIndexes=rep(1:RepeatTimes,each=2)
+  ColumnNames=paste(ColumnNames,ColumnIndexes,sep='_')
+  ColumnNames=c('clonotype','Real', ColumnNames)
+  names(merged)<-ColumnNames
+  return(merged)
+}
+
+Intermediate=getResultTable(200,500,3)
+```
+
+
+
+ 
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+
+
+
+
+
 
 # Get Variation Distance
 
-```{r}
-getDistance_R<-function(clonotype,abundance){
+```{r, message = FALSE, warning = FALSE,eval=FALSE}
+getDistance_R<-function(clonotype,abundance,realDF){
   stimulated<- data.frame(clonotype,abundance)
 
   sum_abundance=sum(stimulated['abundance'])
@@ -243,7 +332,7 @@ print(time5-time4)
 
 # Calculate distances for samples
 
-```{r,message = FALSE,warning = FALSE}
+```{r,message = FALSE,warning = FALSE,eval=FALSE}
 DistanceListFromEM=c()
 DistanceListFromUN=c()
 for(i in 1:20){
@@ -261,7 +350,7 @@ for(i in 1:20){
 
 
 # Visualize
-```{r}
+```{r,eval=FALSE}
 boxplot(DistanceListFromEM)
 hist(DistanceListFromEM)
 boxplot(DistanceListFromUN)

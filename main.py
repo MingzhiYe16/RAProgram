@@ -2,43 +2,53 @@ import csv
 import random
 import pandas as pd
 import numpy
-
 # Global parameter
-PoolSize=2000
-SampleSize=5000
-errorProb=0.01
+
 AmiNoAcids=['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V']
-
-# Generate sample pool
-def getCDR3():
-    res=random.choices(AmiNoAcids,k=15)
-    return ''.join(res)
-Original_Alpha_Pool=[getCDR3() for i in range(PoolSize)]
-Original_Beta_Pool=[getCDR3() for i in range(PoolSize)]
-SamplePoolAlpha=random.choices(Original_Alpha_Pool,k=PoolSize)
-SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
-SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
-
 IndexnAnBMap=[]
+MapRandomIntToIndex=None
+NumofEachClonotype=None
+MapLength=None
+SamplePool=None
+realDF=None
+joinedDF=None
+
 with open('IndexnAnBMap.csv', 'r') as csvfile:
     reader = csv.reader(csvfile, skipinitialspace=True)
     for row in reader:
         IndexnAnBMap.append(row)
 IndexnAnBMap=[[int(x[0]),int(x[1])] for x in IndexnAnBMap]
 
-MapRandomIntToIndex=[numpy.random.geometric(0.25,1)[0] for i in range(PoolSize)]
-MapRandomIntToIndex=[[i]*MapRandomIntToIndex[i] for i in range(PoolSize)]
-MapRandomIntToIndex = [item for sublist in MapRandomIntToIndex for item in sublist]
-MapLength=len(MapRandomIntToIndex)
+def generateSamplePool(PoolSize):
+    global AmiNoAcids,MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
+    joinedDF = None
+    # Generate sample pool
+    def getCDR3():
+        res=random.choices(AmiNoAcids,k=15)
+        return ''.join(res)
+    Original_Alpha_Pool=[getCDR3() for i in range(PoolSize)]
+    Original_Beta_Pool=[getCDR3() for i in range(PoolSize)]
+    SamplePoolAlpha=random.choices(Original_Alpha_Pool,k=PoolSize)
+    SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
+    SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
 
-real_clonotypes=[x[0]+' '+x[1] for x in SamplePool]
-real_abundance=[1/PoolSize for i in range(PoolSize)]
-names=("clonotypes","abundance")
-realDF=pd.DataFrame(list(zip(real_clonotypes,real_abundance)),
-                            columns=names)
-realDF=realDF.groupby(['clonotypes']).sum()
-realDF=realDF.reset_index()
-def getSample():
+
+
+    NumofEachClonotype=[numpy.random.geometric(0.25,1)[0] for i in range(PoolSize)]
+    MapRandomIntToIndex=[[i]*NumofEachClonotype[i] for i in range(PoolSize)]
+    MapRandomIntToIndex = [item for sublist in MapRandomIntToIndex for item in sublist]
+    MapLength=len(MapRandomIntToIndex)
+
+    real_clonotypes=[x[0]+' '+x[1] for x in SamplePool]
+    real_abundance=[i/MapLength for i in NumofEachClonotype]
+    names=("clonotypes","abundance")
+    realDF=pd.DataFrame(list(zip(real_clonotypes,real_abundance)),
+                                columns=names)
+    realDF=realDF.groupby(['clonotypes']).sum()
+    realDF=realDF.reset_index()
+    return
+
+def getSample(PoolSize,SampleSize,errorProb=0.01):
     NumOfChains=random.choices(IndexnAnBMap,k=SampleSize)
 
     def getChainTypes(i):
@@ -146,16 +156,38 @@ def getSample():
 
 
 
-def getDistance(clonotypes,abundance):
+def updateMergedDataframe(clonotypes,abundance):
+    global joinedDF
     names=("clonotypes","abundance")
     stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
                             columns=names)
     sum_abundance=sum(stimulated['abundance'])
     stimulated['abundance']=stimulated['abundance']/sum_abundance
-    joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+    if joinedDF is None:
+        joinedDF=realDF.copy()
+    joinedDF=joinedDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
     joinedDF = joinedDF.fillna(0)
-    # return joinedDF
-    return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
+    return
+
+def getIntermediateResult(Times):
+    global joinedDF
+    names=[['EM'+str(i+1),'UN'+str(i+1)] for i in range(Times)]
+    names=[a for b in names for a in b]
+    names = ['clonotypes', 'real'] + names
+    joinedDF.set_axis(names, axis=1, inplace=True)
+
+
+    return joinedDF
 
 
 
+# def getDistance(clonotypes,abundance):
+#     names=("clonotypes","abundance")
+#     stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
+#                             columns=names)
+#     sum_abundance=sum(stimulated['abundance'])
+#     stimulated['abundance']=stimulated['abundance']/sum_abundance
+#     joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+#     joinedDF = joinedDF.fillna(0)
+#     # return joinedDF
+#     return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))

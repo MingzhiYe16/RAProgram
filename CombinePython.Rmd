@@ -24,34 +24,50 @@ source_python("./main.py")
 # Calculate distances for samples
 
 ```{r,message = FALSE,warning = FALSE}
-DistanceListFromEM=c()
-DistanceListFromUN=c()
-for(i in 1:20){
-  sample=getSample()
+time0=Sys.time()
+
+getResultTable <- function(PoolSize,SampleSize,Times){
+  generateSamplePool(PoolSize)
   
-  sample$high_confidence<-as.logical(sample$high_confidence)
-  sample$productive<-as.logical(sample$productive)
-  sample$full_length<-as.logical(sample$full_length)
-  sample$is_cell<-as.logical(sample$is_cell)
+  for(i in 1:Times){
+    sample=getSample(PoolSize,SampleSize)
+    
+    sample$high_confidence<-as.logical(sample$high_confidence)
+    sample$productive<-as.logical(sample$productive)
+    sample$full_length<-as.logical(sample$full_length)
+    sample$is_cell<-as.logical(sample$is_cell)
+    
+    samplelist <- split(sample, f = sample$barcode)
+    samplelist  <- SplitDataFrameList(samplelist)
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    updateMergedDataframe(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
   
-  samplelist <- split(sample, f = sample$barcode)
-  samplelist  <- SplitDataFrameList(samplelist)
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    updateMergedDataframe(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    
+    
+    print(i)
+    time1=Sys.time()
+    print(time1-time0)
+    time0=time1
+    
   
-  EMpredicted <- clonoStats(samplelist, method = 'EM')
-  distance1=getDistance(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
-  DistanceListFromEM[i]=distance1
-  
-  UNpredicted <- clonoStats(samplelist, method = 'unique')
-  distance2=getDistance(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
-  DistanceListFromUN[i]=distance2
+  }
+  return(getIntermediateResult(Times))
 }
+
+
+Intermediate=getResultTable(20000L,50000L,1L)
+
+
 ```
 
 
 
 
 # Visualize
-```{r}
+```{r,eval=FALSE}
 boxplot(DistanceListFromEM)
 hist(DistanceListFromEM)
 boxplot(DistanceListFromUN)
