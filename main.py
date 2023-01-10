@@ -20,7 +20,7 @@ with open('IndexnAnBMap.csv', 'r') as csvfile:
 IndexnAnBMap=[[int(x[0]),int(x[1])] for x in IndexnAnBMap]
 
 def generateSamplePool(PoolSize):
-    global AmiNoAcids,MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
+    global MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
     joinedDF = None
     # Generate sample pool
     def getCDR3():
@@ -179,15 +179,22 @@ def getIntermediateResult(Times):
 
     return joinedDF
 
+def clearStorage():
+    global MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
+    MapRandomIntToIndex = None
+    NumofEachClonotype = None
+    MapLength = None
+    SamplePool = None
+    realDF = None
+    joinedDF = None
 
-
-# def getDistance(clonotypes,abundance):
-#     names=("clonotypes","abundance")
-#     stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
-#                             columns=names)
-#     sum_abundance=sum(stimulated['abundance'])
-#     stimulated['abundance']=stimulated['abundance']/sum_abundance
-#     joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
-#     joinedDF = joinedDF.fillna(0)
-#     # return joinedDF
-#     return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
+def getDistance(clonotypes,abundance):
+    names=("clonotypes","abundance")
+    stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
+                            columns=names)
+    sum_abundance=sum(stimulated['abundance'])
+    stimulated['abundance']=stimulated['abundance']/sum_abundance
+    joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+    joinedDF = joinedDF.fillna(0)
+    # return joinedDF
+    return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))

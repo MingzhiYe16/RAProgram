@@ -21,10 +21,10 @@ source_python("./main.py")
 
 
 
-# Calculate distances for samples
+# Calculate Intermediate Result Table for samples
 
 ```{r,message = FALSE,warning = FALSE}
-time0=Sys.time()
+#time0=Sys.time()
 
 getResultTable <- function(PoolSize,SampleSize,Times){
   generateSamplePool(PoolSize)
@@ -47,34 +47,79 @@ getResultTable <- function(PoolSize,SampleSize,Times){
     updateMergedDataframe(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
     
     
-    print(i)
-    time1=Sys.time()
-    print(time1-time0)
-    time0=time1
+    #print(i)
+    #time1=Sys.time()
+    #print(time1-time0)
+    #time0=time1
     
   
   }
-  return(getIntermediateResult(Times))
+  result=getIntermediateResult(Times)
+  clearStorage()
+  return(result)
 }
 
 
-Intermediate=getResultTable(20000L,50000L,1L)
+#Intermediate=getResultTable(200L,500L,1L)
+
+
+```
+
+# Calculate distances for samples
+
+```{r,message = FALSE,warning = FALSE}
+#time0=Sys.time()
+
+getDistanceDataFrame <- function(PoolSize,SampleSize,Times){
+  generateSamplePool(PoolSize)
+  DistanceListFromEM=c()
+  DistanceListFromUN=c()
+  for(i in 1:Times){
+    sample=getSample(PoolSize,SampleSize)
+    
+    sample$high_confidence<-as.logical(sample$high_confidence)
+    sample$productive<-as.logical(sample$productive)
+    sample$full_length<-as.logical(sample$full_length)
+    sample$is_cell<-as.logical(sample$is_cell)
+    
+    samplelist <- split(sample, f = sample$barcode)
+    samplelist  <- SplitDataFrameList(samplelist)
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    DistanceListFromEM[i]=getDistance(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+  
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    DistanceListFromUN[i]=getDistance(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    
+    
+    #print(i)
+    #time1=Sys.time()
+    #print(time1-time0)
+    #time0=time1
+    
+  
+  }
+
+  clearStorage()
+  return(data.frame(DistanceListFromUN,DistanceListFromEM))
+}
+
+
+ResultDistances=getDistanceDataFrame(200L,500L,10L)
 
 
 ```
 
 
-
-
 # Visualize
 ```{r,eval=FALSE}
-boxplot(DistanceListFromEM)
-hist(DistanceListFromEM)
-boxplot(DistanceListFromUN)
-hist(DistanceListFromUN)
-print(median(DistanceListFromEM))
-print(median(DistanceListFromUN))
-print(mean(DistanceListFromEM))
-print(mean(DistanceListFromUN))
+boxplot(ResultDistances$DistanceListFromEM)
+hist(ResultDistances$DistanceListFromEM)
+boxplot(ResultDistances$DistanceListFromUN)
+hist(ResultDistances$DistanceListFromUN)
+print(median(ResultDistances$DistanceListFromEM))
+print(median(ResultDistances$DistanceListFromUN))
+print(mean(ResultDistances$DistanceListFromEM))
+print(mean(ResultDistances$DistanceListFromUN))
 ```
 

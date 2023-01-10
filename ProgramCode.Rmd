@@ -176,7 +176,7 @@ getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, s
 
 # Use the functions to generate a sample with size 50
 
-However, function ‘clonoStats’ is not compatible with SimpleDFrameList, how to transform SimpleDFrameList to CompressedSplitDFrameList
+
 ```{r}
 getSample <- function(samplesize,MapRandomIntToIndex,samplePool){
     RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
@@ -264,33 +264,8 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
   return(merged)
 }
 
-Intermediate=getResultTable(200,500,3)
+#Intermediate=getResultTable(200,500,3)
 ```
-
-
-
- 
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-####################################################################################################################
-
-
-
-
 
 
 # Get Variation Distance
@@ -333,17 +308,49 @@ print(time5-time4)
 # Calculate distances for samples
 
 ```{r,message = FALSE,warning = FALSE,eval=FALSE}
-DistanceListFromEM=c()
-DistanceListFromUN=c()
-for(i in 1:20){
-  samplelist=getSample(SampleSize)
-  EMpredicted <- clonoStats(samplelist, method = 'EM')
-  distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
-  DistanceListFromEM[i]=distance1
-  UNpredicted <- clonoStats(samplelist, method = 'unique')
-  distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
-  DistanceListFromUN[i]=distance2
+getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
+  Num_of_Repeat=rgeom(poolSize, .25)+1
+  MapRandomIntToIndex=getMapRandomIntToIndex(poolSize,Num_of_Repeat)
+  samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
+  
+  # Generate the dataframe recording the abundance for each clonotype in the sample pool
+  clonotypes_in_pool=samplePool[,'cdr3']
+  
+  concatCDR3<-function(x){
+    res=paste(x[1],x[2],sep=' ')
+      res=paste(x[1],x[2],sep=' ')
+      return(res)
+  }
+  clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
+  clonotypes_in_pool=unlist(clonotypes_in_pool)
+  Sum_of_Repeat=sum(Num_of_Repeat)
+  abundance=Num_of_Repeat/Sum_of_Repeat
+  realDF<- data.frame(clonotypes_in_pool,abundance)
+  rownames(realDF) <- NULL
+  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+  colnames(realDF) <- c('clonotype','abundance')
+  
+  DistanceListFromEM=c()
+  DistanceListFromUN=c()
+  for(i in 1:RepeatTimes){
+    samplelist=getSample(SampleSize,MapRandomIntToIndex, samplePool)
+    
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
+    DistanceListFromEM[i]=distance1
+
+    
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
+    DistanceListFromUN[i]=distance2
+
+  }
+
+  return(data.frame(DistanceListFromUN,DistanceListFromEM))
 }
+ResultDistances=getDistanceDataFrame(200,500,10)
+
 ```
 
 
@@ -351,13 +358,13 @@ for(i in 1:20){
 
 # Visualize
 ```{r,eval=FALSE}
-boxplot(DistanceListFromEM)
-hist(DistanceListFromEM)
-boxplot(DistanceListFromUN)
-hist(DistanceListFromUN)
-print(median(DistanceListFromEM))
-print(median(DistanceListFromUN))
-print(mean(DistanceListFromEM))
-print(mean(DistanceListFromUN))
+boxplot(ResultDistances$DistanceListFromEM)
+hist(ResultDistances$DistanceListFromEM)
+boxplot(ResultDistances$DistanceListFromUN)
+hist(ResultDistances$DistanceListFromUN)
+print(median(ResultDistances$DistanceListFromEM))
+print(median(ResultDistances$DistanceListFromUN))
+print(mean(ResultDistances$DistanceListFromEM))
+print(mean(ResultDistances$DistanceListFromUN))
 ```
 
