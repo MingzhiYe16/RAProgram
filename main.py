@@ -2,13 +2,12 @@ import csv
 import random
 import pandas as pd
 import numpy
+from scipy.special import rel_entr
 # Global parameter
 
 AmiNoAcids=['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V']
 IndexnAnBMap=[]
-MapRandomIntToIndex=None
-NumofEachClonotype=None
-MapLength=None
+ProbOfEachClonotype=None
 SamplePool=None
 realDF=None
 joinedDF=None
@@ -20,7 +19,7 @@ with open('IndexnAnBMap.csv', 'r') as csvfile:
 IndexnAnBMap=[[int(x[0]),int(x[1])] for x in IndexnAnBMap]
 
 def generateSamplePool(PoolSize):
-    global MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
+    global ProbOfEachClonotype,SamplePool,realDF,joinedDF
     joinedDF = None
     # Generate sample pool
     def getCDR3():
@@ -32,15 +31,12 @@ def generateSamplePool(PoolSize):
     SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
     SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
 
-
-
-    NumofEachClonotype=[numpy.random.geometric(0.25,1)[0] for i in range(PoolSize)]
-    MapRandomIntToIndex=[[i]*NumofEachClonotype[i] for i in range(PoolSize)]
-    MapRandomIntToIndex = [item for sublist in MapRandomIntToIndex for item in sublist]
-    MapLength=len(MapRandomIntToIndex)
+    ProbOfEachClonotype=[1/(i+1) for i in range(PoolSize)]
+    ProbSum=sum(ProbOfEachClonotype)
+    ProbOfEachClonotype=[i / ProbSum for i in ProbOfEachClonotype]
 
     real_clonotypes=[x[0]+' '+x[1] for x in SamplePool]
-    real_abundance=[i/MapLength for i in NumofEachClonotype]
+    real_abundance=ProbOfEachClonotype[::]
     names=("clonotypes","abundance")
     realDF=pd.DataFrame(list(zip(real_clonotypes,real_abundance)),
                                 columns=names)
@@ -75,8 +71,7 @@ def getSample(PoolSize,SampleSize,errorProb=0.01):
     def getCDR3sForCertainClonotype(i):
         result=[[],[]]
         numberA,numberB=NumOfChains[i][0],NumOfChains[i][1]
-        indexInPool = random.sample(range(MapLength), 3)
-        indexInPool=[MapRandomIntToIndex[x] for x in indexInPool]
+        indexInPool = numpy.random.choice(range(PoolSize),size=3,replace=False, p=ProbOfEachClonotype)
         usedA,usedB=set(),set()
         if numberA >= 1:
             if random.uniform(0,1) >= errorProb:
@@ -97,21 +92,21 @@ def getSample(PoolSize,SampleSize,errorProb=0.01):
         numberB-=1
 
         while numberA > 0:
-            indexInPool=random.randint(0, MapLength-1)
-            indexInPool=MapRandomIntToIndex[indexInPool]
+            indexInPool=random.choices(range(PoolSize),k=1,weights=ProbOfEachClonotype)
+            indexInPool=indexInPool[0]
             while indexInPool in usedA:
-                indexInPool = random.randint(0, PoolSize - 1)
-                indexInPool = MapRandomIntToIndex[indexInPool]
+                indexInPool = random.choices(range(PoolSize),k=1,weights=ProbOfEachClonotype)
+                indexInPool = indexInPool[0]
             usedA.add(indexInPool)
             result[0].append(SamplePool[indexInPool][0])
             numberA-=1
 
         while numberB > 0:
-            indexInPool=random.randint(0, MapLength-1)
-            indexInPool = MapRandomIntToIndex[indexInPool]
+            indexInPool=random.choices(range(PoolSize),k=1,weights=ProbOfEachClonotype)
+            indexInPool = indexInPool[0]
             while indexInPool in usedB:
-                indexInPool = random.randint(0, PoolSize - 1)
-                indexInPool = MapRandomIntToIndex[indexInPool]
+                indexInPool = random.choices(range(PoolSize),k=1,weights=ProbOfEachClonotype)
+                indexInPool = indexInPool[0]
             usedB.add(indexInPool)
             result[1].append(SamplePool[indexInPool][1])
             numberB-=1
@@ -180,10 +175,8 @@ def getIntermediateResult(Times):
     return joinedDF
 
 def clearStorage():
-    global MapRandomIntToIndex,NumofEachClonotype,MapLength,SamplePool,realDF,joinedDF
-    MapRandomIntToIndex = None
-    NumofEachClonotype = None
-    MapLength = None
+    global ProbOfEachClonotype,SamplePool,realDF,joinedDF
+    ProbOfEachClonotype = None
     SamplePool = None
     realDF = None
     joinedDF = None
@@ -198,3 +191,15 @@ def getDistance(clonotypes,abundance):
     joinedDF = joinedDF.fillna(0)
     # return joinedDF
     return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
+
+
+def getKLDivergence(clonotypes,abundance):
+    names=("clonotypes","abundance")
+    stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
+                            columns=names)
+    sum_abundance=sum(stimulated['abundance'])
+    stimulated['abundance']=stimulated['abundance']/sum_abundance
+    joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+    joinedDF = joinedDF.fillna(1e-20)
+    # return joinedDF
+    return sum(rel_entr(joinedDF['abundance2'],joinedDF['abundance1']))

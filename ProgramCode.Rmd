@@ -14,14 +14,9 @@ library(VDJdive)
 library(tidyverse)
 require(SingleCellExperiment)
 library(r2r)
-
+library(philentropy)
 ```
 
-#Global parameter
-```{r}
-poolSize=2000
-SampleSize=5000
-```
 
 # Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
 ```{r}
@@ -58,27 +53,10 @@ getClonotypeForPool<-function(clonotype_index, CDRAlpha, CDRBeta){
 ```
 
 
-# Generate a map which map generated random int to the index in sample pool
-```{r}
-getMapRandomIntToIndex<-function(poolSize,Num_of_Repeat){
-    
-    MapRandomIntToIndex=Num_of_Repeat
-    getRep <- function(x){
-      
-      
-      return(rep(x,MapRandomIntToIndex[x]))
-    }
-    MapRandomIntToIndex=sapply(1:poolSize,getRep,simplify = TRUE)
-    MapRandomIntToIndex=unlist(MapRandomIntToIndex)
-    MapLength=length(MapRandomIntToIndex)
-    return(MapRandomIntToIndex)
-}
-#MapRandomIntToIndex=getMapRandomIntToIndex(poolSize)
-```
 
 # Generate sample pool
 ```{r}
-getSamplePool <- function(poolSize,MapRandomIntToIndex){
+getSamplePool <- function(poolSize){
 
     
     
@@ -107,18 +85,16 @@ getSamplePool <- function(poolSize,MapRandomIntToIndex){
     return(samplePool)
     
 }
-#samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
+#samplePool=getSamplePool(poolSize)
 ```
 
 
 
 # Functions for generate a sample
 ```{r}
-getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, samplePool, errorProb = .01){
+getClonotype<-function(clonotype_index, numberA, numberB, DistributionOfClonotypes, samplePool, poolSize, errorProb = .01){
     result=DataFrame()
-    MapLength=length(MapRandomIntToIndex)
-    indexInPool=sample.int(MapLength, 3, replace=FALSE)
-    indexInPool=MapRandomIntToIndex[indexInPool]
+    indexInPool=sample(1:poolSize, 3, replace=FALSE, prob=DistributionOfClonotypes)
     setAlpha <- hashset()
     setBeta <- hashset()
 
@@ -144,11 +120,9 @@ getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, s
         numberB=numberB-1
     }
     while(numberA>0){
-        indexInPool=sample.int(MapLength, 1, replace=TRUE)
-        indexInPool=MapRandomIntToIndex[indexInPool]
+        indexInPool=sample(1:poolSize, 1, replace=FALSE, prob=DistributionOfClonotypes)
         while(setAlpha[indexInPool]==TRUE){
-          indexInPool=sample.int(MapLength, 1, replace=TRUE)
-          indexInPool=MapRandomIntToIndex[indexInPool]
+          indexInPool=sample(1:poolSize, 1, replace=FALSE, prob=DistributionOfClonotypes)
         }
         insert(setAlpha,indexInPool)
         result=rbind(result,samplePool[[indexInPool]][1,])
@@ -157,11 +131,9 @@ getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, s
         
     }
     while(numberB>0){
-        indexInPool=sample.int(MapLength, 1, replace=TRUE)
-        indexInPool=MapRandomIntToIndex[indexInPool]
+        indexInPool=sample(1:poolSize, 1, replace=FALSE, prob=DistributionOfClonotypes)
         while(setBeta[indexInPool]==TRUE){
-          indexInPool=sample.int(MapLength, 1, replace=TRUE)
-          indexInPool=MapRandomIntToIndex[indexInPool]
+          indexInPool=sample(1:poolSize, 1, replace=FALSE, prob=DistributionOfClonotypes)
         }
         insert(setBeta,indexInPool)
         result=rbind(result,samplePool[[indexInPool]][2,])
@@ -178,14 +150,14 @@ getClonotype<-function(clonotype_index, numberA, numberB, MapRandomIntToIndex, s
 
 
 ```{r}
-getSample <- function(samplesize,MapRandomIntToIndex,samplePool){
+getSample <- function(samplesize,DistributionOfClonotypes,samplePool, poolSize){
     RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
 
     barcode <- paste('cell', 1:samplesize)
     
     
     sample <- lapply(1:samplesize, function(clonotype_index){
-        getClonotype(clonotype_index, IndexnAnBMap[RandomIntegers[clonotype_index],1], IndexnAnBMap[RandomIntegers[clonotype_index],2], MapRandomIntToIndex, samplePool)
+        getClonotype(clonotype_index, IndexnAnBMap[RandomIntegers[clonotype_index],1], IndexnAnBMap[RandomIntegers[clonotype_index],2], DistributionOfClonotypes, samplePool, poolSize)
     })
     sample <- SplitDataFrameList(sample)
     sample[,'barcode'] <- barcode
@@ -222,9 +194,8 @@ getMerged<-function(clonotype,abundance,merged){
 # Generate table
 ```{r,warning=FALSE}
 getResultTable <- function(poolSize,SampleSize,RepeatTimes){
-  Num_of_Repeat=rgeom(poolSize, .25)+1
-  MapRandomIntToIndex=getMapRandomIntToIndex(poolSize,Num_of_Repeat)
-  samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
+  DistributionOfClonotypes=1/(1:poolSize)
+  samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
   clonotypes_in_pool=samplePool[,'cdr3']
@@ -236,8 +207,8 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
   }
   clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
   clonotypes_in_pool=unlist(clonotypes_in_pool)
-  Sum_of_Repeat=sum(Num_of_Repeat)
-  abundance=Num_of_Repeat/Sum_of_Repeat
+  Sum_of_Repeat=sum(DistributionOfClonotypes)
+  abundance=DistributionOfClonotypes/Sum_of_Repeat
   realDF<- data.frame(clonotypes_in_pool,abundance)
   rownames(realDF) <- NULL
   realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
@@ -245,7 +216,7 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
   
   merged=realDF
   for(i in 1:RepeatTimes){
-    samplelist=getSample(SampleSize,MapRandomIntToIndex, samplePool)
+    samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
     EMpredicted <- clonoStats(samplelist, method = 'EM')
@@ -270,7 +241,7 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
 
 # Get Variation Distance
 
-```{r, message = FALSE, warning = FALSE,eval=FALSE}
+```{r, message = FALSE, warning = FALSE}
 getDistance_R<-function(clonotype,abundance,realDF){
   stimulated<- data.frame(clonotype,abundance)
 
@@ -283,35 +254,15 @@ getDistance_R<-function(clonotype,abundance,realDF){
 }
 
 ```
-# Test
 
-```{r, message = FALSE, warning = FALSE,eval=FALSE}
-time0=Sys.time()
-samplelist=getSample(5000)
-time1=Sys.time()
-print(time1-time0)
-EMpredicted <- clonoStats(samplelist, method = 'EM')
-time2=Sys.time()
-print(time2-time1)
-distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
-time3=Sys.time()
-print(time3-time2)
-UNpredicted <- clonoStats(samplelist, method = 'unique')
-time4=Sys.time()
-print(time4-time3)
-distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
-time5=Sys.time()
-print(time5-time4)
-```
 
 
 # Calculate distances for samples
 
-```{r,message = FALSE,warning = FALSE,eval=FALSE}
+```{r,message = FALSE,warning = FALSE}
 getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
-  Num_of_Repeat=rgeom(poolSize, .25)+1
-  MapRandomIntToIndex=getMapRandomIntToIndex(poolSize,Num_of_Repeat)
-  samplePool=getSamplePool(poolSize,MapRandomIntToIndex)
+  DistributionOfClonotypes=1/(1:poolSize)
+  samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
   clonotypes_in_pool=samplePool[,'cdr3']
@@ -323,8 +274,8 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   }
   clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
   clonotypes_in_pool=unlist(clonotypes_in_pool)
-  Sum_of_Repeat=sum(Num_of_Repeat)
-  abundance=Num_of_Repeat/Sum_of_Repeat
+  Sum_of_Repeat=sum(DistributionOfClonotypes)
+  abundance=DistributionOfClonotypes/Sum_of_Repeat
   realDF<- data.frame(clonotypes_in_pool,abundance)
   rownames(realDF) <- NULL
   realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
@@ -333,7 +284,7 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   DistanceListFromEM=c()
   DistanceListFromUN=c()
   for(i in 1:RepeatTimes){
-    samplelist=getSample(SampleSize,MapRandomIntToIndex, samplePool)
+    samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
     EMpredicted <- clonoStats(samplelist, method = 'EM')
@@ -349,11 +300,72 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
 
   return(data.frame(DistanceListFromUN,DistanceListFromEM))
 }
-ResultDistances=getDistanceDataFrame(200,500,10)
+#ResultDistances=getDistanceDataFrame(200,500,10)
+
+```
+# Get KL Divergence
+
+```{r, message = FALSE, warning = FALSE}
+getKLDivergence<-function(clonotype,abundance,realDF){
+  stimulated<- data.frame(clonotype,abundance)
+
+  sum_abundance=sum(stimulated['abundance'])
+  stimulated['abundance']=stimulated['abundance']/sum_abundance
+  
+  merged = merge(x = realDF, y = stimulated, by = "clonotype",all = TRUE)
+  merged[is.na(merged)] <- 0
+  RES=KL(rbind(merged[['abundance.y']],merged[['abundance.x']]),epsilon=1e-20)
+  return(RES)
+}
 
 ```
 
+# Calculate KL Divergence for samples
 
+```{r,message = FALSE,warning = FALSE}
+getKLDivergenceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
+  DistributionOfClonotypes=1/(1:poolSize)
+  samplePool=getSamplePool(poolSize)
+  
+  # Generate the dataframe recording the abundance for each clonotype in the sample pool
+  clonotypes_in_pool=samplePool[,'cdr3']
+  
+  concatCDR3<-function(x){
+    res=paste(x[1],x[2],sep=' ')
+      res=paste(x[1],x[2],sep=' ')
+      return(res)
+  }
+  clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
+  clonotypes_in_pool=unlist(clonotypes_in_pool)
+  Sum_of_Repeat=sum(DistributionOfClonotypes)
+  abundance=DistributionOfClonotypes/Sum_of_Repeat
+  realDF<- data.frame(clonotypes_in_pool,abundance)
+  rownames(realDF) <- NULL
+  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool), FUN=sum)
+  colnames(realDF) <- c('clonotype','abundance')
+  
+  DistanceListFromEM=c()
+  DistanceListFromUN=c()
+  for(i in 1:RepeatTimes){
+    samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
+    
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    distance1=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
+    DistanceListFromEM[i]=distance1
+
+    
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    distance2=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
+    DistanceListFromUN[i]=distance2
+
+  }
+
+  return(data.frame(DistanceListFromUN,DistanceListFromEM))
+}
+ResultDistances=getKLDivergenceDataFrame(20,50,10)
+
+```
 
 
 # Visualize

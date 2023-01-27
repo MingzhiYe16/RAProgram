@@ -105,11 +105,56 @@ getDistanceDataFrame <- function(PoolSize,SampleSize,Times){
 }
 
 
-ResultDistances=getDistanceDataFrame(200L,500L,10L)
+ResultDistances=getDistanceDataFrame(200L,500L,1L)
 
 
 ```
 
+
+# Calculate KL Divergence for samples
+
+```{r,message = FALSE,warning = FALSE}
+#time0=Sys.time()
+
+getKLDivergenceFrame <- function(PoolSize,SampleSize,Times){
+  generateSamplePool(PoolSize)
+  DistanceListFromEM=c()
+  DistanceListFromUN=c()
+  for(i in 1:Times){
+    sample=getSample(PoolSize,SampleSize)
+    
+    sample$high_confidence<-as.logical(sample$high_confidence)
+    sample$productive<-as.logical(sample$productive)
+    sample$full_length<-as.logical(sample$full_length)
+    sample$is_cell<-as.logical(sample$is_cell)
+    
+    samplelist <- split(sample, f = sample$barcode)
+    samplelist  <- SplitDataFrameList(samplelist)
+    
+    EMpredicted <- clonoStats(samplelist, method = 'EM')
+    DistanceListFromEM[i]=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+  
+    UNpredicted <- clonoStats(samplelist, method = 'unique')
+    DistanceListFromUN[i]=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    
+    
+    #print(i)
+    #time1=Sys.time()
+    #print(time1-time0)
+    #time0=time1
+    
+  
+  }
+
+  clearStorage()
+  return(data.frame(DistanceListFromUN,DistanceListFromEM))
+}
+
+
+ResultDistances=getKLDivergenceFrame(200L,500L,1L)
+
+
+```
 
 # Visualize
 ```{r,eval=FALSE}
