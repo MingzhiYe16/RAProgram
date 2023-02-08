@@ -7,17 +7,14 @@ from scipy.spatial import distance
 # Global parameter
 
 AmiNoAcids=['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V']
-IndexnAnBMap=[]
 ProbOfEachClonotype=None
 SamplePool=None
 realDF=None
 joinedDF=None
 
-with open('IndexnAnBMap.csv', 'r') as csvfile:
-    reader = csv.reader(csvfile, skipinitialspace=True)
-    for row in reader:
-        IndexnAnBMap.append(row)
-IndexnAnBMap=[[int(x[0]),int(x[1])] for x in IndexnAnBMap]
+
+IndexnAnBMap=[(0, 0), (2, 1), (1, 2), (1, 1), (0, 2), (1, 0), (2, 2), (0, 1), (3, 1), (1, 3), (2, 3), (3, 2), (2, 0), (3, 3)]
+nAnBWeight=[149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1]
 
 def generateSamplePool(PoolSize):
     global ProbOfEachClonotype,SamplePool,realDF,joinedDF
@@ -46,7 +43,7 @@ def generateSamplePool(PoolSize):
     return
 
 def getSample(PoolSize,SampleSize,errorProb=0.01):
-    NumOfChains=random.choices(IndexnAnBMap,k=SampleSize)
+    NumOfChains=random.choices(IndexnAnBMap, weights=nAnBWeight,k=SampleSize)
 
     def getChainTypes(i):
         res=[]

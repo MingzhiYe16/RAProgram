@@ -162,7 +162,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
 }
 
 
-ResultDistances=getEvaluationDataFrame(20L,50L,1L)
+ResultDistances=getEvaluationDataFrame(200L,500L,10L)
 
 
 ```

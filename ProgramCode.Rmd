@@ -20,8 +20,8 @@ library(philentropy)
 
 # Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
 ```{r}
-IndexnAnBMap=read.csv("IndexnAnBMap.csv",header = F)
-IndexnAnBMap=as.matrix(IndexnAnBMap)
+IndexnAnBMap=rbind(c(0, 0), c(2, 1), c(1, 2), c(1, 1), c(0, 2), c(1, 0), c(2, 2), c(0, 1), c(3, 1), c(1, 3), c(2, 3), c(3, 2), c(2, 0), c(3, 3))
+nAnBWeight=c(149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1)
 ```
 
 # Get a template dataframe of a clonotype which has one alpha chain and one beta chain
@@ -151,7 +151,7 @@ getClonotype<-function(clonotype_index, numberA, numberB, DistributionOfClonotyp
 
 ```{r}
 getSample <- function(samplesize,DistributionOfClonotypes,samplePool, poolSize){
-    RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T)
+    RandomIntegers <- sample(1:(length(IndexnAnBMap)/2), samplesize, replace=T, prob=nAnBWeight)
 
     barcode <- paste('cell', 1:samplesize)
     
@@ -423,7 +423,7 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
 
   return(data.frame(DistanceListFromUN,DistanceListFromEM,KLDivergenceListFromUN,KLDivergenceListFromEM,JSDivergenceListFromUN,JSDivergenceListFromEM,DistanceEM_UN))
 }
-ResultDistances=getEvaluationDataFrame(20,50,1)
+ResultDistances=getEvaluationDataFrame(200,500,10)
 
 ```
 
