@@ -320,10 +320,51 @@ getKLDivergence<-function(clonotype,abundance,realDF){
 
 ```
 
-# Calculate KL Divergence for samples
+# Get JS Divergence
+
+```{r, message = FALSE, warning = FALSE}
+getJSDivergence<-function(clonotype,abundance,realDF){
+  stimulated<- data.frame(clonotype,abundance)
+
+  sum_abundance=sum(stimulated['abundance'])
+  stimulated['abundance']=stimulated['abundance']/sum_abundance
+  
+  merged = merge(x = realDF, y = stimulated, by = "clonotype",all = TRUE)
+  merged[is.na(merged)] <- 0
+  RES=JSD(rbind(merged[['abundance.y']],merged[['abundance.x']]))
+  return(RES)
+}
+
+```
+
+# Get Distance between two predict methods
+
+```{r, message = FALSE, warning = FALSE}
+getDistanceEM_UN<-function(clonotype1,abundance1,clonotype2,abundance2){
+  stimulated1<- data.frame(clonotype1,abundance1)
+  stimulated2<- data.frame(clonotype2,abundance2)
+  
+  colnames(stimulated1) <- c('clonotype','abundance')
+  colnames(stimulated2) <- c('clonotype','abundance')
+
+  sum_abundance1=sum(stimulated1['abundance'])
+  sum_abundance2=sum(stimulated2['abundance'])
+  
+  stimulated1['abundance']=stimulated1['abundance']/sum_abundance1
+  stimulated2['abundance']=stimulated2['abundance']/sum_abundance2
+
+  
+
+  merged = merge(x = stimulated1, y = stimulated2, by = "clonotype",all = TRUE)
+  merged[is.na(merged)] <- 0
+  return (sum(abs(merged['abundance.x']-merged['abundance.y'])))
+}
+```
+
+# Calculate distance and KL Divergence for samples
 
 ```{r,message = FALSE,warning = FALSE}
-getKLDivergenceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
+getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   DistributionOfClonotypes=1/(1:poolSize)
   samplePool=getSamplePool(poolSize)
   
@@ -344,26 +385,45 @@ getKLDivergenceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool), FUN=sum)
   colnames(realDF) <- c('clonotype','abundance')
   
+
   DistanceListFromEM=c()
   DistanceListFromUN=c()
+  KLDivergenceListFromEM=c()
+  KLDivergenceListFromUN=c()
+  JSDivergenceListFromEM=c()
+  JSDivergenceListFromUN=c()
+  DistanceEM_UN=c()
+  
   for(i in 1:RepeatTimes){
     samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
     EMpredicted <- clonoStats(samplelist, method = 'EM')
-    distance1=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
+    
+    distance1=getDistance_R(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
     DistanceListFromEM[i]=distance1
+    distance1=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
+    KLDivergenceListFromEM[i]=distance1
+    distance1=getJSDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1],realDF)
+    JSDivergenceListFromEM[i]=distance1
 
     
     UNpredicted <- clonoStats(samplelist, method = 'unique')
-    distance2=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
+    
+    distance2=getDistance_R(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
     DistanceListFromUN[i]=distance2
-
+    distance2=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
+    KLDivergenceListFromUN[i]=distance2
+    distance2=getJSDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
+    JSDivergenceListFromUN[i]=distance2
+    
+    distance3=getDistanceEM_UN(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+    DistanceEM_UN[i]=distance3
   }
 
-  return(data.frame(DistanceListFromUN,DistanceListFromEM))
+  return(data.frame(DistanceListFromUN,DistanceListFromEM,KLDivergenceListFromUN,KLDivergenceListFromEM,JSDivergenceListFromUN,JSDivergenceListFromEM,DistanceEM_UN))
 }
-ResultDistances=getKLDivergenceDataFrame(20,50,10)
+ResultDistances=getEvaluationDataFrame(20,50,1)
 
 ```
 

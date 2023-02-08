@@ -111,15 +111,20 @@ ResultDistances=getDistanceDataFrame(200L,500L,1L)
 ```
 
 
-# Calculate KL Divergence for samples
+# Calculate distance, KL Divergence, and JS Divergence for samples
 
 ```{r,message = FALSE,warning = FALSE}
 #time0=Sys.time()
 
-getKLDivergenceFrame <- function(PoolSize,SampleSize,Times){
+getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
   generateSamplePool(PoolSize)
   DistanceListFromEM=c()
   DistanceListFromUN=c()
+  KLDivergenceListFromEM=c()
+  KLDivergenceListFromUN=c()
+  JSDivergenceListFromEM=c()
+  JSDivergenceListFromUN=c()
+  DistanceListUN_EM=c()
   for(i in 1:Times){
     sample=getSample(PoolSize,SampleSize)
     
@@ -132,11 +137,17 @@ getKLDivergenceFrame <- function(PoolSize,SampleSize,Times){
     samplelist  <- SplitDataFrameList(samplelist)
     
     EMpredicted <- clonoStats(samplelist, method = 'EM')
-    DistanceListFromEM[i]=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
-  
+    DistanceListFromEM[i]=getDistance(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+    KLDivergenceListFromEM[i]=getKLDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+    JSDivergenceListFromEM[i]=getJSDivergence(clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+
     UNpredicted <- clonoStats(samplelist, method = 'unique')
-    DistanceListFromUN[i]=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    DistanceListFromUN[i]=getDistance(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    KLDivergenceListFromUN[i]=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
+    JSDivergenceListFromUN[i]=getJSDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
     
+    DistanceListUN_EM[i]=getDistanceUN_EM(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+
     
     #print(i)
     #time1=Sys.time()
@@ -147,11 +158,11 @@ getKLDivergenceFrame <- function(PoolSize,SampleSize,Times){
   }
 
   clearStorage()
-  return(data.frame(DistanceListFromUN,DistanceListFromEM))
+  return(data.frame(DistanceListFromUN,DistanceListFromEM,KLDivergenceListFromUN,KLDivergenceListFromEM,JSDivergenceListFromUN,JSDivergenceListFromEM,DistanceListUN_EM))
 }
 
 
-ResultDistances=getKLDivergenceFrame(200L,500L,1L)
+ResultDistances=getEvaluationDataFrame(20L,50L,1L)
 
 
 ```

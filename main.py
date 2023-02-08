@@ -3,6 +3,7 @@ import random
 import pandas as pd
 import numpy
 from scipy.special import rel_entr
+from scipy.spatial import distance
 # Global parameter
 
 AmiNoAcids=['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V']
@@ -192,6 +193,21 @@ def getDistance(clonotypes,abundance):
     # return joinedDF
     return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
 
+def getDistanceUN_EM(clonotypes1,abundance1,clonotypes2,abundance2):
+    names=("clonotypes","abundance")
+    stimulated1 = pd.DataFrame(list(zip(clonotypes1,abundance1)),
+                            columns=names)
+    stimulated2 = pd.DataFrame(list(zip(clonotypes2,abundance2)),
+                            columns=names)
+    sum_abundance1=sum(stimulated1['abundance'])
+    stimulated1['abundance']=stimulated1['abundance']/sum_abundance1
+    sum_abundance2=sum(stimulated2['abundance'])
+    stimulated2['abundance']=stimulated2['abundance']/sum_abundance2
+
+    joinedDF=stimulated1.join(stimulated2.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+    joinedDF = joinedDF.fillna(0)
+    # return joinedDF
+    return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
 
 def getKLDivergence(clonotypes,abundance):
     names=("clonotypes","abundance")
@@ -203,3 +219,14 @@ def getKLDivergence(clonotypes,abundance):
     joinedDF = joinedDF.fillna(1e-20)
     # return joinedDF
     return sum(rel_entr(joinedDF['abundance2'],joinedDF['abundance1']))
+
+def getJSDivergence(clonotypes,abundance):
+    names=("clonotypes","abundance")
+    stimulated = pd.DataFrame(list(zip(clonotypes,abundance)),
+                            columns=names)
+    sum_abundance=sum(stimulated['abundance'])
+    stimulated['abundance']=stimulated['abundance']/sum_abundance
+    joinedDF=realDF.join(stimulated.set_index(['clonotypes']),how='outer', on=['clonotypes'],lsuffix='1', rsuffix='2')
+    joinedDF = joinedDF.fillna(0)
+    # return joinedDF
+    return distance.jensenshannon(joinedDF['abundance2'],joinedDF['abundance1'])
