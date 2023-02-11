@@ -13,9 +13,10 @@ realDF=None
 joinedDF=None
 
 
-IndexnAnBMap=[(0, 0), (2, 1), (1, 2), (1, 1), (0, 2), (1, 0), (2, 2), (0, 1), (3, 1), (1, 3), (2, 3), (3, 2), (2, 0), (3, 3)]
-nAnBWeight=[149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1]
-
+# IndexnAnBMap=[(0, 0), (2, 1), (1, 2), (1, 1), (0, 2), (1, 0), (2, 2), (0, 1), (3, 1), (1, 3), (2, 3), (3, 2), (2, 0), (3, 3)]
+# nAnBWeight=[149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1]
+IndexnAnBMap=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+nAnBWeight=[0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566]
 def generateSamplePool(PoolSize):
     global ProbOfEachClonotype,SamplePool,realDF,joinedDF
     joinedDF = None
