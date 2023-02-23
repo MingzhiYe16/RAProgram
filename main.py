@@ -4,6 +4,7 @@ import pandas as pd
 import numpy
 from scipy.special import rel_entr
 from scipy.spatial import distance
+from scipy.stats import norm
 # Global parameter
 
 AmiNoAcids=['A','R','N','D','C','Q','E','G','H','I','L','K','M','F','P','S','T','W','Y','V']
@@ -30,7 +31,9 @@ def generateSamplePool(PoolSize):
     SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
     SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
 
-    ProbOfEachClonotype=[1/(i+1) for i in range(PoolSize)]
+    #ProbOfEachClonotype=[1 for i in range(PoolSize)]
+    ProbOfEachClonotype = [0.9**i for i in range(PoolSize)]
+    ProbOfEachClonotype = [x if x>0.1**7 else 0.1**7 for x in ProbOfEachClonotype]
     ProbSum=sum(ProbOfEachClonotype)
     ProbOfEachClonotype=[i / ProbSum for i in ProbOfEachClonotype]
 

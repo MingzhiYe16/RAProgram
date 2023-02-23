@@ -105,7 +105,7 @@ getDistanceDataFrame <- function(PoolSize,SampleSize,Times){
 }
 
 
-ResultDistances=getDistanceDataFrame(200L,500L,1L)
+# ResultDistances=getDistanceDataFrame(200L,500L,1L)
 
 
 ```
@@ -162,13 +162,13 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
 }
 
 
-ResultDistances=getEvaluationDataFrame(200L,500L,10L)
+ResultDistances=getEvaluationDataFrame(400L,1000L,10L)
 
 
 ```
 
 # Visualize
-```{r,eval=FALSE}
+```{r}
 boxplot(ResultDistances$DistanceListFromEM)
 hist(ResultDistances$DistanceListFromEM)
 boxplot(ResultDistances$DistanceListFromUN)

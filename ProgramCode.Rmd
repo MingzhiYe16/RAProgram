@@ -194,7 +194,9 @@ getMerged<-function(clonotype,abundance,merged){
 # Generate table
 ```{r,warning=FALSE}
 getResultTable <- function(poolSize,SampleSize,RepeatTimes){
-  DistributionOfClonotypes=1/(1:poolSize)
+  DistributionOfClonotypes=0.8^(1:poolSize)
+  minimum_bound=rep(1e-7,poolSize)
+  DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
