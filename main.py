@@ -194,7 +194,7 @@ def getDistance(clonotypes,abundance):
     # return joinedDF
     return sum(abs(joinedDF['abundance1']-joinedDF['abundance2']))
 
-def getDistanceUN_EM(clonotypes1,abundance1,clonotypes2,abundance2):
+def getDistanceTwoSamples(clonotypes1,abundance1,clonotypes2,abundance2):
     names=("clonotypes","abundance")
     stimulated1 = pd.DataFrame(list(zip(clonotypes1,abundance1)),
                             columns=names)
@@ -231,3 +231,13 @@ def getJSDivergence(clonotypes,abundance):
     joinedDF = joinedDF.fillna(0)
     # return joinedDF
     return distance.jensenshannon(joinedDF['abundance2'],joinedDF['abundance1'])
+
+# df = pd.read_csv ('C:/Users/yemin/Downloads/raw_data/raw_data\S1_T/filtered_contig_annotations.csv')
+# df["column_index"]=df.index
+# 
+# df1=df[["raw_clonotype_id","chain","cdr3","exact_subclonotype_id"]]
+# df2=df1[df1["raw_clonotype_id"]=='clonotype145']
+# df2.head(50)
+#
+# df1.sort_values(by=['raw_clonotype_id',"column_index"])
+# df1.head(40)

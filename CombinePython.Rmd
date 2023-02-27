@@ -146,7 +146,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
     KLDivergenceListFromUN[i]=getKLDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
     JSDivergenceListFromUN[i]=getJSDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1])
     
-    DistanceListUN_EM[i]=getDistanceUN_EM(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+    DistanceListUN_EM[i]=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
 
     
     #print(i)
@@ -177,5 +177,18 @@ print(median(ResultDistances$DistanceListFromEM))
 print(median(ResultDistances$DistanceListFromUN))
 print(mean(ResultDistances$DistanceListFromEM))
 print(mean(ResultDistances$DistanceListFromUN))
+```
+
+```{r}
+# library(VDJdive)
+sample1 <- readVDJcontigs("sample1")
+sample2 <- readVDJcontigs("sample2")
+
+EMpredicted <- clonoStats(sample2, method = 'EM')
+UNpredicted <- clonoStats(sample2, method = 'unique')
+
+EMpredicted1 <- clonoStats(sample1, method = 'EM')
+EMpredicted2 <- clonoStats(sample2, method = 'EM')
+DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted1),clonoAbundance(EMpredicted1)[,1],clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1])
 ```
 

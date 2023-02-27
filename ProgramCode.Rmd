@@ -342,7 +342,7 @@ getJSDivergence<-function(clonotype,abundance,realDF){
 # Get Distance between two predict methods
 
 ```{r, message = FALSE, warning = FALSE}
-getDistanceEM_UN<-function(clonotype1,abundance1,clonotype2,abundance2){
+getDistanceTwoSamples<-function(clonotype1,abundance1,clonotype2,abundance2){
   stimulated1<- data.frame(clonotype1,abundance1)
   stimulated2<- data.frame(clonotype2,abundance2)
   
@@ -419,7 +419,7 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
     distance2=getJSDivergence(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],realDF)
     JSDivergenceListFromUN[i]=distance2
     
-    distance3=getDistanceEM_UN(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+    distance3=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
     DistanceEM_UN[i]=distance3
   }
 
@@ -442,3 +442,16 @@ print(mean(ResultDistances$DistanceListFromEM))
 print(mean(ResultDistances$DistanceListFromUN))
 ```
 
+
+```{r}
+# library(VDJdive)
+sample1 <- readVDJcontigs("sample1")
+sample2 <- readVDJcontigs("sample2")
+#sample3 <- readVDJcontigs("C:/Users/yemin/Downloads/raw_data/raw_data/S1_T")
+EMpredicted <- clonoStats(sample2, method = 'EM')
+UNpredicted <- clonoStats(sample2, method = 'unique')
+
+EMpredicted1 <- clonoStats(sample1, method = 'EM')
+EMpredicted2 <- clonoStats(sample2, method = 'EM')
+DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted1),clonoAbundance(EMpredicted1)[,1],clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1])
+```
