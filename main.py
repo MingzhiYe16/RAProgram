@@ -232,12 +232,43 @@ def getJSDivergence(clonotypes,abundance):
     # return joinedDF
     return distance.jensenshannon(joinedDF['abundance2'],joinedDF['abundance1'])
 
+# import pandas as pd
 # df = pd.read_csv ('C:/Users/yemin/Downloads/raw_data/raw_data\S1_T/filtered_contig_annotations.csv')
-# df["column_index"]=df.index
-# 
-# df1=df[["raw_clonotype_id","chain","cdr3","exact_subclonotype_id"]]
-# df2=df1[df1["raw_clonotype_id"]=='clonotype145']
+# df1=df[["raw_clonotype_id","chain","cdr3","exact_subclonotype_id","barcode"]]
+#
+# df2=df1[df1["raw_clonotype_id"]=='clonotype3606']
 # df2.head(50)
+#
+# df3=df1[df1["cdr3"]=='CAFMKHTYPQGGSEKLVF']
+# df3.head(50)
+#
+# s1=df.groupby('barcode')['raw_clonotype_id'].apply(list)
+# s2=df.groupby('barcode')['cdr3'].apply(list)
+# df4=pd.DataFrame()
+# df4['raw_clonotype_id']=s1
+# df4['cdr3']=s2
+# df4['length']=1
+# def filterunique(x):
+#     x[2]=len(x[1])
+#     return x
+# df4=df4.apply(lambda x:filterunique(x),axis=1)
+# df4=df4[df4.length==1]
+# def delist(x):
+#     x[1]=x[1][0]
+#     x[0]=x[0][0]
+#     return x
+# df4=df4.apply(lambda x:delist(x),axis=1)
+# s3=df4.groupby('cdr3')['raw_clonotype_id'].apply(list)
+# df5=pd.DataFrame()
+# df5["clonotype"]=s3
+# df5['length']=1
+# def prep1(x):
+#     x[0]=set(x[0])
+#     x[1]=len(x[0])
+#     return x
+# df5=df5.apply(lambda x:prep1(x),axis=1)
+# df5=df5[df5.length!=1]
+
 #
 # df1.sort_values(by=['raw_clonotype_id',"column_index"])
 # df1.head(40)

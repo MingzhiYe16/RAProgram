@@ -180,15 +180,15 @@ print(mean(ResultDistances$DistanceListFromUN))
 ```
 
 ```{r}
-# library(VDJdive)
+library(VDJdive)
 sample1 <- readVDJcontigs("sample1")
 sample2 <- readVDJcontigs("sample2")
 
-EMpredicted <- clonoStats(sample2, method = 'EM')
-UNpredicted <- clonoStats(sample2, method = 'unique')
-
 EMpredicted1 <- clonoStats(sample1, method = 'EM')
+UNpredicted1 <- clonoStats(sample1, method = 'unique')
+
 EMpredicted2 <- clonoStats(sample2, method = 'EM')
-DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted1),clonoAbundance(EMpredicted1)[,1],clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1])
+UNpredicted2 <- clonoStats(sample2, method = 'unique')
+DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1],clonoNames(UNpredicted2),clonoAbundance(UNpredicted2)[,1])
 ```
 
