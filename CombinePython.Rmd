@@ -162,7 +162,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
 }
 
 
-ResultDistances=getEvaluationDataFrame(400L,1000L,10L)
+ResultDistances=getEvaluationDataFrame(10000L,1000L,10L)
 
 
 ```
@@ -179,8 +179,8 @@ print(mean(ResultDistances$DistanceListFromEM))
 print(mean(ResultDistances$DistanceListFromUN))
 ```
 
-```{r}
-library(VDJdive)
+```{r, eval=FALSE}
+# library(VDJdive)
 sample1 <- readVDJcontigs("sample1")
 sample2 <- readVDJcontigs("sample2")
 

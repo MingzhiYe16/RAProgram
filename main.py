@@ -19,7 +19,7 @@ joinedDF=None
 IndexnAnBMap=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
 nAnBWeight=[0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566]
 def generateSamplePool(PoolSize):
-    global ProbOfEachClonotype,SamplePool,realDF,joinedDF
+    global SamplePool,realDF,joinedDF
     joinedDF = None
     # Generate sample pool
     def getCDR3():
@@ -31,22 +31,24 @@ def generateSamplePool(PoolSize):
     SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
     SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
 
-    #ProbOfEachClonotype=[1 for i in range(PoolSize)]
-    ProbOfEachClonotype = [0.9**i for i in range(PoolSize)]
-    ProbOfEachClonotype = [x if x>0.1**7 else 0.1**7 for x in ProbOfEachClonotype]
-    ProbSum=sum(ProbOfEachClonotype)
-    ProbOfEachClonotype=[i / ProbSum for i in ProbOfEachClonotype]
 
-    real_clonotypes=[x[0]+' '+x[1] for x in SamplePool]
-    real_abundance=ProbOfEachClonotype[::]
-    names=("clonotypes","abundance")
-    realDF=pd.DataFrame(list(zip(real_clonotypes,real_abundance)),
-                                columns=names)
-    realDF=realDF.groupby(['clonotypes']).sum()
-    realDF=realDF.reset_index()
     return
 
 def getSample(PoolSize,SampleSize,errorProb=0.01):
+    global ProbOfEachClonotype, realDF
+    # ProbOfEachClonotype=[1 for i in range(PoolSize)]
+    ProbOfEachClonotype = [random.uniform(0.6,0.9) ** i for i in range(PoolSize)]
+    ProbOfEachClonotype = [x if x > 0.1 ** 7 else 0.1 ** 7 for x in ProbOfEachClonotype]
+    ProbSum = sum(ProbOfEachClonotype)
+    ProbOfEachClonotype = [i / ProbSum for i in ProbOfEachClonotype]
+
+    real_clonotypes = [x[0] + ' ' + x[1] for x in SamplePool]
+    real_abundance = ProbOfEachClonotype[::]
+    names = ("clonotypes", "abundance")
+    realDF = pd.DataFrame(list(zip(real_clonotypes, real_abundance)),
+                          columns=names)
+    realDF = realDF.groupby(['clonotypes']).sum()
+    realDF = realDF.reset_index()
     NumOfChains=random.choices(IndexnAnBMap, weights=nAnBWeight,k=SampleSize)
 
     def getChainTypes(i):

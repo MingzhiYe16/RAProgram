@@ -194,9 +194,7 @@ getMerged<-function(clonotype,abundance,merged){
 # Generate table
 ```{r,warning=FALSE}
 getResultTable <- function(poolSize,SampleSize,RepeatTimes){
-  DistributionOfClonotypes=0.8^(1:poolSize)
-  minimum_bound=rep(1e-7,poolSize)
-  DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
+
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
@@ -209,15 +207,20 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
   }
   clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
   clonotypes_in_pool=unlist(clonotypes_in_pool)
-  Sum_of_Repeat=sum(DistributionOfClonotypes)
-  abundance=DistributionOfClonotypes/Sum_of_Repeat
-  realDF<- data.frame(clonotypes_in_pool,abundance)
-  rownames(realDF) <- NULL
-  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
-  colnames(realDF) <- c('clonotype','abundance')
+  
   
   merged=realDF
   for(i in 1:RepeatTimes){
+    base_number=runif(1,0.6,0.9)
+    DistributionOfClonotypes=base_number^(1:poolSize)
+    minimum_bound=rep(1e-7,poolSize)
+    DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
+    Sum_of_Repeat=sum(DistributionOfClonotypes)
+    abundance=DistributionOfClonotypes/Sum_of_Repeat
+    realDF<- data.frame(clonotypes_in_pool,abundance)
+    rownames(realDF) <- NULL
+    realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+    colnames(realDF) <- c('clonotype','abundance')
     samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
@@ -263,7 +266,6 @@ getDistance_R<-function(clonotype,abundance,realDF){
 
 ```{r,message = FALSE,warning = FALSE}
 getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
-  DistributionOfClonotypes=1/(1:poolSize)
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
@@ -276,16 +278,21 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   }
   clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
   clonotypes_in_pool=unlist(clonotypes_in_pool)
-  Sum_of_Repeat=sum(DistributionOfClonotypes)
-  abundance=DistributionOfClonotypes/Sum_of_Repeat
-  realDF<- data.frame(clonotypes_in_pool,abundance)
-  rownames(realDF) <- NULL
-  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
-  colnames(realDF) <- c('clonotype','abundance')
+  
   
   DistanceListFromEM=c()
   DistanceListFromUN=c()
   for(i in 1:RepeatTimes){
+    base_number=runif(1,0.6,0.9)
+    DistributionOfClonotypes=base_number^(1:poolSize)
+    minimum_bound=rep(1e-7,poolSize)
+    DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
+    Sum_of_Repeat=sum(DistributionOfClonotypes)
+    abundance=DistributionOfClonotypes/Sum_of_Repeat
+    realDF<- data.frame(clonotypes_in_pool,abundance)
+    rownames(realDF) <- NULL
+    realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+    colnames(realDF) <- c('clonotype','abundance')
     samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
@@ -367,7 +374,6 @@ getDistanceTwoSamples<-function(clonotype1,abundance1,clonotype2,abundance2){
 
 ```{r,message = FALSE,warning = FALSE}
 getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
-  DistributionOfClonotypes=1/(1:poolSize)
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
@@ -380,12 +386,6 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   }
   clonotypes_in_pool=lapply(clonotypes_in_pool,concatCDR3)
   clonotypes_in_pool=unlist(clonotypes_in_pool)
-  Sum_of_Repeat=sum(DistributionOfClonotypes)
-  abundance=DistributionOfClonotypes/Sum_of_Repeat
-  realDF<- data.frame(clonotypes_in_pool,abundance)
-  rownames(realDF) <- NULL
-  realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool), FUN=sum)
-  colnames(realDF) <- c('clonotype','abundance')
   
 
   DistanceListFromEM=c()
@@ -397,6 +397,16 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   DistanceEM_UN=c()
   
   for(i in 1:RepeatTimes){
+    base_number=runif(1,0.6,0.9)
+    DistributionOfClonotypes=base_number^(1:poolSize)
+    minimum_bound=rep(1e-7,poolSize)
+    DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
+    Sum_of_Repeat=sum(DistributionOfClonotypes)
+    abundance=DistributionOfClonotypes/Sum_of_Repeat
+    realDF<- data.frame(clonotypes_in_pool,abundance)
+    rownames(realDF) <- NULL
+    realDF=aggregate(realDF$abundance, by=list(clonotype=realDF$clonotypes_in_pool ), FUN=sum)
+    colnames(realDF) <- c('clonotype','abundance')
     samplelist=getSample(SampleSize,DistributionOfClonotypes, samplePool, poolSize)
     
     
@@ -443,7 +453,7 @@ print(mean(ResultDistances$DistanceListFromUN))
 ```
 
 
-```{r}
+```{r, eval=FALS}
 # library(VDJdive)
 sample1 <- readVDJcontigs("sample1")
 sample2 <- readVDJcontigs("sample2")
