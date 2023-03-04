@@ -15,7 +15,9 @@ library(tidyverse)
 require(SingleCellExperiment)
 library(r2r)
 library(reticulate)
-use_virtualenv('C:/Users/yemin/PycharmProjects/RAProject/venv')
+# Use Python 3.9, require pandas, numpy and scipy
+use_python('/usr/local/bin/python3')
+#use_virtualenv("/Users/mingzhiye/PycharmProjects/pythonProject/venv")
 source_python("./main.py")
 ```
 
@@ -128,7 +130,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
   for(i in 1:Times){
     sample=getSample(PoolSize,SampleSize)
     
-    sample$high_confidence<-as.logical(sample$high_confidence)
+    sample$high_confidence <- as.logical(sample$high_confidence)
     sample$productive<-as.logical(sample$productive)
     sample$full_length<-as.logical(sample$full_length)
     sample$is_cell<-as.logical(sample$is_cell)

@@ -453,7 +453,7 @@ print(mean(ResultDistances$DistanceListFromUN))
 ```
 
 
-```{r, eval=FALS}
+```{r, eval=FALSE}
 # library(VDJdive)
 sample1 <- readVDJcontigs("sample1")
 sample2 <- readVDJcontigs("sample2")
