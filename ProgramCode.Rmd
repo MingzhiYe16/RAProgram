@@ -193,7 +193,7 @@ getMerged<-function(clonotype,abundance,merged){
 
 # Generate table
 ```{r,warning=FALSE}
-getResultTable <- function(poolSize,SampleSize,RepeatTimes){
+getResultTable <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0){
 
   samplePool=getSamplePool(poolSize)
   
@@ -212,6 +212,9 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes){
   merged=realDF
   for(i in 1:RepeatTimes){
     base_number=runif(1,0.6,0.9)
+    if(BaseNumber>0){
+      base_number=BaseNumber
+    }
     DistributionOfClonotypes=base_number^(1:poolSize)
     minimum_bound=rep(1e-7,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
@@ -265,7 +268,7 @@ getDistance_R<-function(clonotype,abundance,realDF){
 # Calculate distances for samples
 
 ```{r,message = FALSE,warning = FALSE}
-getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
+getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0){
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
@@ -284,6 +287,9 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   DistanceListFromUN=c()
   for(i in 1:RepeatTimes){
     base_number=runif(1,0.6,0.9)
+    if(BaseNumber>0){
+      base_number=BaseNumber
+    }
     DistributionOfClonotypes=base_number^(1:poolSize)
     minimum_bound=rep(1e-7,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
@@ -373,7 +379,7 @@ getDistanceTwoSamples<-function(clonotype1,abundance1,clonotype2,abundance2){
 # Calculate distance and KL Divergence for samples
 
 ```{r,message = FALSE,warning = FALSE}
-getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
+getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0){
   samplePool=getSamplePool(poolSize)
   
   # Generate the dataframe recording the abundance for each clonotype in the sample pool
@@ -398,6 +404,9 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes){
   
   for(i in 1:RepeatTimes){
     base_number=runif(1,0.6,0.9)
+    if(BaseNumber>0){
+      base_number=BaseNumber
+    }
     DistributionOfClonotypes=base_number^(1:poolSize)
     minimum_bound=rep(1e-7,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)

@@ -28,11 +28,11 @@ source_python("./main.py")
 ```{r,message = FALSE,warning = FALSE}
 #time0=Sys.time()
 
-getResultTable <- function(PoolSize,SampleSize,Times){
+getResultTable <- function(PoolSize,SampleSize,Times,BaseNumber=0){
   generateSamplePool(PoolSize)
   
   for(i in 1:Times){
-    sample=getSample(PoolSize,SampleSize)
+    sample=getSample(PoolSize,SampleSize,BaseNumber)
     
     sample$high_confidence<-as.logical(sample$high_confidence)
     sample$productive<-as.logical(sample$productive)
@@ -72,12 +72,12 @@ getResultTable <- function(PoolSize,SampleSize,Times){
 ```{r,message = FALSE,warning = FALSE}
 #time0=Sys.time()
 
-getDistanceDataFrame <- function(PoolSize,SampleSize,Times){
+getDistanceDataFrame <- function(PoolSize,SampleSize,Times,BaseNumber=0){
   generateSamplePool(PoolSize)
   DistanceListFromEM=c()
   DistanceListFromUN=c()
   for(i in 1:Times){
-    sample=getSample(PoolSize,SampleSize)
+    sample=getSample(PoolSize,SampleSize,BaseNumber)
     
     sample$high_confidence<-as.logical(sample$high_confidence)
     sample$productive<-as.logical(sample$productive)
@@ -118,7 +118,7 @@ getDistanceDataFrame <- function(PoolSize,SampleSize,Times){
 ```{r,message = FALSE,warning = FALSE}
 #time0=Sys.time()
 
-getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
+getEvaluationDataFrame <- function(PoolSize,SampleSize,Times,BaseNumber=0){
   generateSamplePool(PoolSize)
   DistanceListFromEM=c()
   DistanceListFromUN=c()
@@ -128,7 +128,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times){
   JSDivergenceListFromUN=c()
   DistanceListUN_EM=c()
   for(i in 1:Times){
-    sample=getSample(PoolSize,SampleSize)
+    sample=getSample(PoolSize,SampleSize,BaseNumber)
     
     sample$high_confidence <- as.logical(sample$high_confidence)
     sample$productive<-as.logical(sample$productive)
