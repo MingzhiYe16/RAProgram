@@ -211,12 +211,12 @@ getResultTable <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0){
   
   merged=realDF
   for(i in 1:RepeatTimes){
-    base_number=runif(1,0.6,0.9)
+    base_number=runif(1,0.5,0.95)
     if(BaseNumber>0){
       base_number=BaseNumber
     }
     DistributionOfClonotypes=base_number^(1:poolSize)
-    minimum_bound=rep(1e-7,poolSize)
+    minimum_bound=rep(1e-6,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
     Sum_of_Repeat=sum(DistributionOfClonotypes)
     abundance=DistributionOfClonotypes/Sum_of_Repeat
@@ -286,12 +286,12 @@ getDistanceDataFrame <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0){
   DistanceListFromEM=c()
   DistanceListFromUN=c()
   for(i in 1:RepeatTimes){
-    base_number=runif(1,0.6,0.9)
+    base_number=runif(1,0.5,0.95)
     if(BaseNumber>0){
       base_number=BaseNumber
     }
     DistributionOfClonotypes=base_number^(1:poolSize)
-    minimum_bound=rep(1e-7,poolSize)
+    minimum_bound=rep(1e-6,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
     Sum_of_Repeat=sum(DistributionOfClonotypes)
     abundance=DistributionOfClonotypes/Sum_of_Repeat
@@ -403,12 +403,12 @@ getEvaluationDataFrame <- function(poolSize,SampleSize,RepeatTimes,BaseNumber=0)
   DistanceEM_UN=c()
   
   for(i in 1:RepeatTimes){
-    base_number=runif(1,0.6,0.9)
+    base_number=runif(1,0.5,0.95)
     if(BaseNumber>0){
       base_number=BaseNumber
     }
     DistributionOfClonotypes=base_number^(1:poolSize)
-    minimum_bound=rep(1e-7,poolSize)
+    minimum_bound=rep(1e-6,poolSize)
     DistributionOfClonotypes <- pmax(DistributionOfClonotypes, minimum_bound)
     Sum_of_Repeat=sum(DistributionOfClonotypes)
     abundance=DistributionOfClonotypes/Sum_of_Repeat
