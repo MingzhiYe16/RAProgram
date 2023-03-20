@@ -164,7 +164,7 @@ getEvaluationDataFrame <- function(PoolSize,SampleSize,Times,BaseNumber=0){
 }
 
 
-ResultDistances=getEvaluationDataFrame(10000L,1000L,10L)
+ResultDistances=getEvaluationDataFrame(10000L,500L,10L,0.9)
 
 
 ```
@@ -179,6 +179,8 @@ print(median(ResultDistances$DistanceListFromEM))
 print(median(ResultDistances$DistanceListFromUN))
 print(mean(ResultDistances$DistanceListFromEM))
 print(mean(ResultDistances$DistanceListFromUN))
+print(mean(ResultDistances$JSDivergenceListFromEM))
+print(mean(ResultDistances$JSDivergenceListFromUN))
 ```
 
 ```{r, eval=FALSE}

@@ -20,8 +20,11 @@ library(philentropy)
 
 # Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
 ```{r}
-IndexnAnBMap=rbind(c(0, 0), c(0, 1), c(0, 2), c(1, 0), c(1, 1), c(1, 2), c(2, 0), c(2, 1), c(2, 2))
-nAnBWeight=c(0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566)
+# IndexnAnBMap=rbind(c(0, 0), c(0, 1), c(0, 2), c(1, 0), c(1, 1), c(1, 2), c(2, 0), c(2, 1), c(2, 2))
+# nAnBWeight=c(0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566)
+IndexnAnBMap=rbind(c(1, 1), c(2, 2), c(4, 3), c(2, 1), c(3, 2), c(1, 2), c(0, 1), c(1, 0), c(0, 2), c(4, 2), c(2, 3), c(3, 3), c(3, 4), c(4, 4), c(3, 1), c(5, 3), c(1, 3), c(2, 4), c(5, 5), c(5, 4), c(4, 5), c(0, 3), c(2, 0), c(3, 5))
+nAnBWeight=c(86223, 8484, 122, 9789, 1301, 5726, 14979, 2342, 188, 78, 692, 654, 71, 37, 33, 10, 114, 33, 3, 9, 3, 1, 1, 1)
+
 ```
 
 # Get a template dataframe of a clonotype which has one alpha chain and one beta chain

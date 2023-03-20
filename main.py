@@ -16,8 +16,10 @@ joinedDF=None
 
 # IndexnAnBMap=[(0, 0), (2, 1), (1, 2), (1, 1), (0, 2), (1, 0), (2, 2), (0, 1), (3, 1), (1, 3), (2, 3), (3, 2), (2, 0), (3, 3)]
 # nAnBWeight=[149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1]
-IndexnAnBMap=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
-nAnBWeight=[0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566]
+# IndexnAnBMap=[(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
+# nAnBWeight=[0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566]
+IndexnAnBMap=[(1, 1), (2, 2), (4, 3), (2, 1), (3, 2), (1, 2), (0, 1), (1, 0), (0, 2), (4, 2), (2, 3), (3, 3), (3, 4), (4, 4), (3, 1), (5, 3), (1, 3), (2, 4), (5, 5), (5, 4), (4, 5), (0, 3), (2, 0), (3, 5)]
+nAnBWeight=[86223, 8484, 122, 9789, 1301, 5726, 14979, 2342, 188, 78, 692, 654, 71, 37, 33, 10, 114, 33, 3, 9, 3, 1, 1, 1]
 def generateSamplePool(PoolSize):
     global SamplePool,realDF,joinedDF
     joinedDF = None
@@ -238,6 +240,9 @@ def getJSDivergence(clonotypes,abundance):
     joinedDF = joinedDF.fillna(0)
     # return joinedDF
     return distance.jensenshannon(joinedDF['abundance2'],joinedDF['abundance1'])
+########################################################################
+#############       Find rules for naming clonotypes       #############
+########################################################################
 
 # import pandas as pd
 # df = pd.read_csv ('C:/Users/yemin/Downloads/raw_data/raw_data\S1_T/filtered_contig_annotations.csv')
@@ -279,3 +284,41 @@ def getJSDivergence(clonotypes,abundance):
 #
 # df1.sort_values(by=['raw_clonotype_id',"column_index"])
 # df1.head(40)
+
+
+
+###################################################################################
+#############      Explore distribution of number of TRA and TRB      #############
+###################################################################################
+
+# import pandas as pd
+# import glob
+# import os
+# from collections import Counter
+# path = r'/Users/mingzhiye/RProjects/RAProgram/Melanoma_JEM_TCR_DataPrep' # use your path
+# all_files = glob.glob(os.path.join(path , "*/*.csv"))
+#
+# li = []
+#
+# for filename in all_files:
+#     df = pd.read_csv(filename, index_col=None, header=0)
+#     li.append(df)
+#
+# df = pd.concat(li, axis=0, ignore_index=True)
+# s1=df.groupby('barcode')['chain'].apply(list)
+# df2=pd.DataFrame()
+# df2['chain']=s1
+# df2['distribution']=1
+# def getDistribution(x):
+#     distr=[0,0]
+#     for s in x[0]:
+#         if s=='TRA':
+#             distr[0]+=1
+#         elif s=='TRB':
+#             distr[1]+=1
+#     x[1]=distr
+#     return x
+# df2=df2.apply(lambda x:getDistribution(x),axis=1)
+# distr=list(df2["distribution"])
+# distr=[tuple(x) for x in distr]
+# c=Counter(distr)
