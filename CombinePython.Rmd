@@ -196,3 +196,28 @@ UNpredicted2 <- clonoStats(sample2, method = 'unique')
 DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1],clonoNames(UNpredicted2),clonoAbundance(UNpredicted2)[,1])
 ```
 
+
+# Compare clonotype distributions from UN and EM methods in real data
+```{r}
+# Set the root directory
+root_dir <- "/Users/mingzhiye/RProjects/RAProgram/samples"
+
+# Recursively list all directories in the root directory
+result <- list.dirs(root_dir, recursive = TRUE)
+
+# Filter out the files and keep only the directories
+result <- result[file.info(result)$isdir]
+result<-result[-1]
+resultDF=c()
+for(i in 1:length(result)){
+  RealDistribution=readVDJcontigs(result[i])
+  EMpredicted <- clonoStats(RealDistribution, method = 'EM')
+  UNpredicted <- clonoStats(RealDistribution, method = 'unique')
+  distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+  resultDF[i]=distance
+  print(i)
+}
+boxplot(resultDF)
+hist(resultDF)
+print(resultDF)
+```
