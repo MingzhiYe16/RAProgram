@@ -35,8 +35,8 @@ def generateSamplePool(PoolSize):
     def getCDR3():
         res=random.choices(AmiNoAcids,k=15)
         return ''.join(res)
-    Original_Alpha_Pool=[getCDR3() for i in range(PoolSize)]
-    Original_Beta_Pool=[getCDR3() for i in range(PoolSize)]
+    Original_Alpha_Pool=[getCDR3() for i in range(int(PoolSize/2))]
+    Original_Beta_Pool=[getCDR3() for i in range(int(PoolSize/2))]
     SamplePoolAlpha=random.choices(Original_Alpha_Pool,k=PoolSize)
     SamplePoolBeta=random.choices(Original_Beta_Pool,k=PoolSize)
     SamplePool=list(zip(SamplePoolAlpha,SamplePoolBeta))
@@ -51,7 +51,7 @@ def getSample(PoolSize,SampleSize,BaseNumber,errorProb=0.01):
     if BaseNumber>0:
         ProbOfEachClonotype = [random.uniform(0.5,0.95) ** i for i in range(PoolSize)]
     else:
-        ProbOfEachClonotype = [BaseNumber ** i for i in range(PoolSize)]
+        ProbOfEachClonotype = [BaseNumber ** i + 0.999 ** i for i in range(PoolSize)]
     ProbOfEachClonotype = [x if x > 0.1 ** 6 else 0.1 ** 6 for x in ProbOfEachClonotype]
 
     ProbSum = sum(ProbOfEachClonotype)
