@@ -199,25 +199,26 @@ DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted2),clonoAbundance(EMpredict
 
 # Compare clonotype distributions from UN and EM methods in real data
 ```{r}
-# Set the root directory
-root_dir <- "/Users/mingzhiye/RProjects/RAProgram/samples"
+samples2 <- paste0('/Users/mingzhiye/RProjects/RAProgram/samples/',
+                  system('ls /Users/mingzhiye/RProjects/RAProgram/samples/',
+                         intern = TRUE))
+RealDistribution=readVDJcontigs(samples2)
+EMpredicted <- clonoStats(RealDistribution, method = 'EM')
+UNpredicted <- clonoStats(RealDistribution, method = 'unique')
+distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+print(distance)
+# resultDF=c()
+# for(i in 1:length(samples2)){
+#   RealDistribution=readVDJcontigs(samples2[i])
+#   EMpredicted <- clonoStats(RealDistribution, method = 'EM')
+#   UNpredicted <- clonoStats(RealDistribution, method = 'unique')
+#   distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames# (EMpredicted),clonoAbundance(EMpredicted)[,1])
+#   resultDF[i]=distance
+#   print(i)
+# }
+# boxplot(resultDF)
+# hist(resultDF)
+# print(resultDF)
 
-# Recursively list all directories in the root directory
-result <- list.dirs(root_dir, recursive = TRUE)
-
-# Filter out the files and keep only the directories
-result <- result[file.info(result)$isdir]
-result<-result[-1]
-resultDF=c()
-for(i in 1:length(result)){
-  RealDistribution=readVDJcontigs(result[i])
-  EMpredicted <- clonoStats(RealDistribution, method = 'EM')
-  UNpredicted <- clonoStats(RealDistribution, method = 'unique')
-  distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
-  resultDF[i]=distance
-  print(i)
-}
-boxplot(resultDF)
-hist(resultDF)
-print(resultDF)
+#S11_M S10_T2 S6_N S8_N
 ```
