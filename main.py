@@ -48,10 +48,16 @@ def getSample(PoolSize,SampleSize,BaseNumber,errorProb=0.01):
     global ProbOfEachClonotype, realDF
     # ProbOfEachClonotype=[1 for i in range(PoolSize)]
 
-    if BaseNumber>0:
-        ProbOfEachClonotype = [random.uniform(0.5,0.95) ** i for i in range(PoolSize)]
-    else:
-        ProbOfEachClonotype = [BaseNumber ** i + 0.999 ** i for i in range(PoolSize)]
+    if BaseNumber==0:
+        BaseNumber = random.uniform(0.5,0.95)
+    
+    p1 = [BaseNumber ** i for i in range(PoolSize)]
+    p1sum = sum(p1)
+    p1 = [i / p1sum for i in p1]
+    p2 = [0.999 ** i for i in range(PoolSize)]
+    p2sum = sum(p2)
+    p2 = [i / p2sum for i in p2]
+    ProbOfEachClonotype = [p1[i] + p2[i] for i in range(PoolSize)]
     ProbOfEachClonotype = [x if x > 0.1 ** 6 else 0.1 ** 6 for x in ProbOfEachClonotype]
 
     ProbSum = sum(ProbOfEachClonotype)
