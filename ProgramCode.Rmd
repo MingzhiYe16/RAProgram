@@ -20,10 +20,22 @@ library(philentropy)
 
 # Get the combined distribution of number of Alpha chains and number of Beta chains in a clonotype
 ```{r}
-# IndexnAnBMap=rbind(c(0, 0), c(0, 1), c(0, 2), c(1, 0), c(1, 1), c(1, 2), c(2, 0), c(2, 1), c(2, 2))
-# nAnBWeight=c(0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566)
-IndexnAnBMap=rbind(c(1, 1), c(2, 2), c(4, 3), c(2, 1), c(3, 2), c(1, 2), c(0, 1), c(1, 0), c(0, 2), c(4, 2), c(2, 3), c(3, 3), c(3, 4), c(4, 4), c(3, 1), c(5, 3), c(1, 3), c(2, 4), c(5, 5), c(5, 4), c(4, 5), c(0, 3), c(2, 0), c(3, 5))
-nAnBWeight=c(86223, 8484, 122, 9789, 1301, 5726, 14979, 2342, 188, 78, 692, 654, 71, 37, 33, 10, 114, 33, 3, 9, 3, 1, 1, 1)
+#IndexnAnBMap <- list(c(0,0), c(2,1), c(1,2), c(1,1), c(0,2), c(1,0), c(2,2), c(0,1), c(3,1), c(1,3), c(2,3), c(3,2), c(2,0), c(3,3))
+#nAnBWeight <- c(149, 134, 154, 409, 15, 1, 57, 53, 7, 10, 5, 4, 1, 1)
+
+#IndexnAnBMap <- list(c(0,0), c(0,1), c(0,2), c(1,0), c(1,1), c(1,2), c(2,0), c(2,1), c(2,2))
+#nAnBWeight <- c(0, 12382, 0, 2813, 71977, 2194, 0, 7129, 566)
+
+#IndexnAnBMap <- list(c(1,1), c(2,2), c(4,3), c(2,1), c(3,2), c(1,2), c(0,1), c(1,0), c(0,2), c(4,2), c(2,3), c(3,3), c(3,4), c(4,4), c(3,1), c(5,3), c(1,3), c(2,4), c(5,5), c(5,4), c(4,5), c(0,3), c(2,0), c(3,5))
+#nAnBWeight <- c(86223, 8484, 122, 9789, 1301, 5726, 14979, 2342, 188, 78, 692, 654, 71, 37, 33, 10, 114, 33, 3, 9, 3, 1, 1, 1)
+
+#IndexnAnBMap <- list(c(0,1), c(1,1), c(1,0), c(1,2), c(2,2), c(2,1))
+#nAnBWeight <- c(30479, 176070, 5612, 6617, 3353, 18511)
+
+
+IndexnAnBMap <- rbind(c(0, 1), c(1, 1), c(1, 0), c(0, 2), c(1, 2), c(2, 2), c(2, 1), c(2, 0), c(0, 3), c(1, 3), c(2, 3), c(3, 3), c(3, 2), c(3, 1), c(3, 0), c(0, 4), c(1, 4), c(2, 4), c(3, 4), c(4, 4), c(4, 3), c(4, 2), c(4, 1), c(4, 0), c(1, 5), c(2, 5), c(3, 5), c(4, 5), c(5, 5), c(5, 4), c(5, 3), c(5, 2), c(5, 1), c(1, 6), c(2, 6), c(3, 6), c(5, 6), c(6, 5), c(6, 4), c(6, 2), c(7, 6), c(2, 7), c(3, 7))
+
+nAnBWeight <- c(9469, 50038, 3577, 2245, 25671, 10315, 13407, 102, 90, 1504, 1538, 629, 1171, 516, 5, 5, 74, 146, 80, 34, 105, 126, 30, 1, 11, 12, 11, 9, 3, 7, 14, 10, 1, 1, 5, 5, 2, 1, 2, 1, 1, 1, 1)
 
 ```
 
@@ -476,4 +488,28 @@ UNpredicted1 <- clonoStats(sample1, method = 'unique')
 EMpredicted2 <- clonoStats(sample2, method = 'EM')
 UNpredicted2 <- clonoStats(sample2, method = 'unique')
 DISTANCE=getDistanceTwoSamples(clonoNames(EMpredicted1),clonoAbundance(EMpredicted1)[,1],clonoNames(EMpredicted2),clonoAbundance(EMpredicted2)[,1])
+```
+
+# Compare clonotype distributions from UN and EM methods in real data
+```{r}
+samples2 <- paste0('/Users/mingzhiye/RProjects/RAProgram/samples/',
+                  system('ls /Users/mingzhiye/RProjects/RAProgram/samples/',
+                         intern = TRUE))
+RealDistribution=readVDJcontigs(samples2)
+EMpredicted <- clonoStats(RealDistribution, method = 'EM')
+UNpredicted <- clonoStats(RealDistribution, method = 'unique')
+distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames(EMpredicted),clonoAbundance(EMpredicted)[,1])
+print(distance)
+# resultDF=c()
+# for(i in 1:length(samples2)){
+#   RealDistribution=readVDJcontigs(samples2[i])
+#   EMpredicted <- clonoStats(RealDistribution, method = 'EM')
+#   UNpredicted <- clonoStats(RealDistribution, method = 'unique')
+#   distance=getDistanceTwoSamples(clonoNames(UNpredicted),clonoAbundance(UNpredicted)[,1],clonoNames# (EMpredicted),clonoAbundance(EMpredicted)[,1])
+#   resultDF[i]=distance
+#   print(i)
+# }
+# boxplot(resultDF)
+# hist(resultDF)
+# print(resultDF)
 ```
